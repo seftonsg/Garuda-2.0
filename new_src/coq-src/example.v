@@ -21,7 +21,7 @@ Definition encode
         (input:id (tbit))
         (output:id (tarr n<<<tbit>>>))                
   : prog :=
-  iter 0 n (fun i => output@i <- evar input).
+  syntax.iter 0 n (fun i => output@i <- evar input).
 
 Definition decode
         (n:nat)
@@ -29,7 +29,7 @@ Definition decode
         (output:id (tbit))
   : prog :=
   Local vec "r" ::== int32 0;;;
-  iter 0 n (fun i => "r" <= evar "r" plus input[[i]]);;;
+  syntax.iter 0 n (fun i => "r" <= evar "r" plus input[[i]]);;;
   SITE ((evar "r" lt val (Int.repr (Z.of_nat (n/2 + 1)) : interp_ty TVec32)))
     (output <= val FALSE)
     (output <= val TRUE).

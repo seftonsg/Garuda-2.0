@@ -26,12 +26,12 @@ Close Scope hdl_exp_scope.
 
 Declare Scope hdl_stmt_scope.
 Notation "x <= e" := (SAssign x e) (at level 70) : hdl_stmt_scope. (*TODO: change to ::= to avoid confusion with Verilog nonblocking assignments*)
-Close Scope hdl_stmt_scope.
 Definition iter (lo hi:nat) (f:iN hi -> stmt) := @SIter lo hi f.
 Arguments iter lo hi f : clear implicits.
 Notation "x @ i <- e" := (SUpdate x i e) (at level 70).
 Notation "'skip'" := (SSkip) (at level 70).
 Infix ";;" := (SSeq) (at level 71).
+Close Scope hdl_stmt_scope.
 
 Coercion PSeq : prog >-> Funclass.
 Coercion PStmt : stmt >-> prog.

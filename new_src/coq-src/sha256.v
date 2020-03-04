@@ -154,10 +154,10 @@ h6 <= val h6';;
 h7 <= val h7';;
           
 (* Copy chunk into first 16 words of w. *)
-iter 0%Z 16%Z (fun i => w@'i <- m[[''(i)]]);;
+syntax.iter 0 16 (fun i => w@'i <- m[[''(i)]]);;
 
 (* Extend the first 16 words into the remaining 48 words w[16..63] of the message schedule array: *)
-iter 16 64 (fun i =>
+syntax.iter 16 64 (fun i =>
     s0 <= (w[[''(i-15)]] rightrotate (val (int32 7%Z)))
              xor (w[[''(i-15)]] rightrotate (val (int32 18%Z)))
              xor (w[[''(i-15)]] rightshift (val (int32 3%Z)));;
@@ -178,7 +178,7 @@ g <= evar h6;;
 h <= evar h7;;
 
 (* Compression function main loop: *)
-iter 0 64 (fun i =>
+syntax.iter 0 64 (fun i =>
     S1 <= (evar e rightrotate (val (int32 6%Z))) xor (evar e rightrotate (val (int32 11%Z))) xor
           (evar e rightrotate (val (int32 25%Z)));;
     ch <= (evar e and evar f) xor (not (evar e) and evar g);;
@@ -311,9 +311,9 @@ Program Definition sha256_chunks
   Local vec "g" ::== int32 0;;;      
   Local vec "h" ::== int32 0;;; 
 
-  iter 0 n (fun j =>
+  syntax.iter 0 n (fun j =>
     (*copy current chunk into "chunk"*)                             
-    iter 0 16 (fun i => "chunk"@i <- chunks[[@nat_to_iN (16*n) (16*j + i)]]);;   
+    syntax.iter 0 16 (fun i => "chunk"@i <- chunks[[@nat_to_iN (16*n) (16*j + i)]]);;   
     (*run the core hash function*)
     core "chunk" "ww" "h0" "h1" "h2" "h3" "h4" "h5" "h6" "h7"
          "s0" "s1" "S1" "ch" "temp1" "S0" "maj" "temp2"
@@ -329,9 +329,9 @@ Definition sha256_mult
   let onebit_idx: iN padded_size_w32 := force n in
   let size_idx: iN padded_size_w32 := force padded_size_w32_m1 in
   Local arr "padded" <<< tvec32, padded_size_w32 >>>;;;
-  iter 0 padded_size_w32 (fun i => "padded"@i <- val (int32 0%Z));;;
-  iter 0 n (fun i => "padded"@i <- "m"[[i]]);;; 
-  iter n padded_size_w32 (fun i => "padded"@i <- val (int32 0%Z));;;
+  syntax.iter 0 padded_size_w32 (fun i => "padded"@i <- val (int32 0%Z));;;
+  syntax.iter 0 n (fun i => "padded"@i <- "m"[[i]]);;; 
+  syntax.iter n padded_size_w32 (fun i => "padded"@i <- val (int32 0%Z));;;
   "padded"@onebit_idx <- val (int32 1%Z) rightrotate val (int32 1%Z);;; (*'1' bit after message*)
   "padded"@size_idx <- val (int32 (Z.of_nat (32*n)));;; (*The message size in bits*)
   sha256_chunks (n:=num_chunks) "padded" hash.
