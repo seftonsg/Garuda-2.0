@@ -214,7 +214,7 @@ Proof.
   intros. subst y.
   assert (forall (n m: Z) (P1 P2: n < m), P1 = P2).
   {
-    unfold Zlt; intros.
+    unfold Z.lt; intros.
     apply eq_proofs_unicity.
     intros c1 c2. destruct c1; destruct c2; (left; reflexivity) || (right; congruence).
   }
@@ -426,7 +426,7 @@ Remark half_modulus_power:
 Proof.
   unfold half_modulus. rewrite modulus_power.
   set (ws1 := zwordsize - 1).
-  replace (zwordsize) with (Zsucc ws1).
+  replace (zwordsize) with (Z.succ ws1).
   rewrite two_p_S. rewrite Zmult_comm. apply Z_div_mult. omega.
   unfold ws1. generalize wordsize_pos; omega.
   unfold ws1. omega.
@@ -585,7 +585,7 @@ Qed.
 End EQ_MODULO.
 
 Lemma eqmod_divides:
-  forall n m x y, eqmod n x y -> Zdivide m n -> eqmod m x y.
+  forall n m x y, eqmod n x y -> Z.divide m n -> eqmod m x y.
 Proof.
   intros. destruct H as [k1 EQ1]. destruct H0 as [k2 EQ2].
   exists (k1*k2). rewrite <- Zmult_assoc. rewrite <- EQ2. auto.
@@ -1277,7 +1277,7 @@ Proof.
     assert (Z.abs (Z.quot N D) < half_modulus).
     { rewrite <- Z.quot_abs by omega. apply Zquot_lt_upper_bound.
       xomega. xomega.
-      apply Zle_lt_trans with (half_modulus * 1).
+      apply Z.le_lt_trans with (half_modulus * 1).
       rewrite Z.mul_1_r. unfold min_signed, max_signed in H3; xomega.
       apply Zmult_lt_compat_l. generalize half_modulus_pos; omega. xomega. }
     rewrite Z.abs_lt in H4.
@@ -1570,7 +1570,7 @@ Proof.
     rewrite Ztestbit_0. destruct (Z.testbit x i) as [] eqn:E; auto.
     exploit H; eauto. rewrite Ztestbit_0. auto.
   - assert (Z.div2 x0 <= x).
-    { apply H0. intros. exploit (H1 (Zsucc i)).
+    { apply H0. intros. exploit (H1 (Z.succ i)).
         omega. rewrite Ztestbit_succ; auto. rewrite Ztestbit_shiftin_succ; auto.
     }
     rewrite (Zdecomp x0). rewrite !Zshiftin_spec.
@@ -2493,7 +2493,7 @@ Qed.
 
 Theorem rol_rol:
   forall x n m,
-  Zdivide zwordsize modulus ->
+  Z.divide zwordsize modulus ->
   rol (rol x n) m = rol x (modu (add n m) iwordsize).
 Proof.
   bit_solve. f_equal. apply eqmod_mod_eq. apply wordsize_pos.
@@ -2524,7 +2524,7 @@ Qed.
 
 Theorem rolm_rolm:
   forall x n1 m1 n2 m2,
-  Zdivide zwordsize modulus ->
+  Z.divide zwordsize modulus ->
   rolm (rolm x n1 m1) n2 m2 =
     rolm x (modu (add n1 n2) iwordsize)
            (and (rol m1 n2) m2).
@@ -3748,7 +3748,7 @@ Proof.
 Qed.
 
 Lemma Zsize_shiftin:
-  forall b x, 0 < x -> Zsize (Zshiftin b x) = Zsucc (Zsize x).
+  forall b x, 0 < x -> Zsize (Zshiftin b x) = Z.succ (Zsize x).
 Proof.
   intros. destruct x; compute in H; try discriminate.
   destruct b.
@@ -3759,7 +3759,7 @@ Proof.
 Qed.
 
 Lemma Ztestbit_size_1:
-  forall x, 0 < x -> Z.testbit x (Zpred (Zsize x)) = true.
+  forall x, 0 < x -> Z.testbit x (Z.pred (Zsize x)) = true.
 Proof.
   intros x0 POS0; pattern x0; apply Zshiftin_pos_ind; auto.
   intros. rewrite Zsize_shiftin; auto.
@@ -3803,14 +3803,14 @@ Proof.
   destruct (zeq x 0).
   subst x; simpl; omega.
   destruct (zlt n (Zsize x)); auto.
-  exploit (Ztestbit_above N x (Zpred (Zsize x))). auto. omega.
+  exploit (Ztestbit_above N x (Z.pred (Zsize x))). auto. omega.
   rewrite Ztestbit_size_1. congruence. omega.
 Qed.
 
 Lemma Zsize_monotone:
   forall x y, 0 <= x <= y -> Zsize x <= Zsize y.
 Proof.
-  intros. apply Zge_le. apply Zsize_interval_2. apply Zsize_pos.
+  intros. apply Z.ge_le. apply Zsize_interval_2. apply Zsize_pos.
   exploit (Zsize_interval_1 y). omega.
   omega.
 Qed.
@@ -3821,7 +3821,7 @@ Proof.
 Qed.
 
 Theorem bits_size_1:
-  forall x, x = zero \/ testbit x (Zpred (size x)) = true.
+  forall x, x = zero \/ testbit x (Z.pred (size x)) = true.
 Proof.
   intros. destruct (zeq (unsigned x) 0).
   left. rewrite <- (repr_unsigned x). rewrite e; auto.
@@ -3861,7 +3861,7 @@ Qed.
 Theorem bits_size_4:
   forall x n,
   0 <= n ->
-  testbit x (Zpred n) = true ->
+  testbit x (Z.pred n) = true ->
   (forall i, n <= i < zwordsize -> testbit x i = false) ->
   size x = n.
 Proof.
@@ -3976,7 +3976,7 @@ Strategy 0 [Wordsize_32.wordsize].
 Notation int := Int.int.
 
 Remark int_wordsize_divides_modulus:
-  Zdivide (Z_of_nat Int.wordsize) Int.modulus.
+  Z.divide (Z_of_nat Int.wordsize) Int.modulus.
 Proof.
   exists (two_p (32-5)); reflexivity.
 Qed.

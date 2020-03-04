@@ -142,7 +142,7 @@ Instance Bit_ScalarTy : ScalarTy TBit :=
   mkScalarTy
     (fun b:interp_ty TBit => b)
     (fun b:interp_ty TBit => if b then 1%Z else 0%Z)
-    (fun z:Z => if Z_eq_dec z 0 then false else true)
+    (fun z:Z => if Z.eq_dec z 0 then false else true)
     (fun b:interp_ty TBit => negb b)
     (fun o =>
        match o with

@@ -28,3 +28,8 @@ lia.cache
 nia.cache
 nlia.cache
 nra.cache
+
+#Coq
+*.vo
+*.vos
+*.vok
