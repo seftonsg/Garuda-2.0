@@ -125,21 +125,21 @@ Lemma Plt_trans:
 Proof (Pos.lt_trans).
 
 Lemma Plt_succ:
-  forall (x: positive), Plt x (Psucc x).
+  forall (x: positive), Plt x (Pos.succ x).
 Proof.
   unfold Plt; intros. apply Pos.lt_succ_r. apply Pos.le_refl.
 Qed.
 Hint Resolve Plt_succ: coqlib.
 
 Lemma Plt_trans_succ:
-  forall (x y: positive), Plt x y -> Plt x (Psucc y).
+  forall (x y: positive), Plt x y -> Plt x (Pos.succ y).
 Proof.
   intros. apply Plt_trans with y. assumption. apply Plt_succ.
 Qed.
 Hint Resolve Plt_succ: coqlib.
 
 Lemma Plt_succ_inv:
-  forall (x y: positive), Plt x (Psucc y) -> Plt x y \/ x = y.
+  forall (x y: positive), Plt x (Pos.succ y) -> Plt x y \/ x = y.
 Proof.
   unfold Plt; intros. rewrite Pos.lt_succ_r in H.
   apply Pos.le_lteq; auto.
@@ -165,7 +165,7 @@ Proof (Pos.le_trans).
 Lemma Plt_Ple: forall (p q: positive), Plt p q -> Ple p q.
 Proof (Pos.lt_le_incl).
 
-Lemma Ple_succ: forall (p: positive), Ple p (Psucc p).
+Lemma Ple_succ: forall (p: positive), Ple p (Pos.succ p).
 Proof.
   intros. apply Plt_Ple. apply Plt_succ.
 Qed.
@@ -197,16 +197,16 @@ Variable v1: A.
 Variable f: positive -> A -> A.
 
 Lemma Ppred_Plt:
-  forall x, x <> xH -> Plt (Ppred x) x.
+  forall x, x <> xH -> Plt (Pos.pred x) x.
 Proof.
   intros. elim (Psucc_pred x); intro. contradiction.
-  set (y := Ppred x) in *. rewrite <- H0. apply Plt_succ.
+  set (y := Pos.pred x) in *. rewrite <- H0. apply Plt_succ.
 Qed.
 
 Let iter (x: positive) (P: forall y, Plt y x -> A) : A :=
   match peq x xH with
   | left EQ => v1
-  | right NOTEQ => f (Ppred x) (P (Ppred x) (Ppred_Plt x NOTEQ))
+  | right NOTEQ => f (Pos.pred x) (P (Pos.pred x) (Ppred_Plt x NOTEQ))
   end.
 
 Definition positive_rec : positive -> A :=
@@ -228,18 +228,18 @@ Proof.
 Qed.
 
 Lemma positive_rec_succ:
-  forall x, positive_rec (Psucc x) = f x (positive_rec x).
+  forall x, positive_rec (Pos.succ x) = f x (positive_rec x).
 Proof.
   intro. rewrite unroll_positive_rec. unfold iter.
-  case (peq (Psucc x) 1); intro.
+  case (peq (Pos.succ x) 1); intro.
   destruct x; simpl in e; discriminate.
-  rewrite Ppred_succ. auto.
+  rewrite Pos.pred_succ. auto.
 Qed.
 
 Lemma positive_Peano_ind:
   forall (P: positive -> Prop),
   P xH ->
-  (forall x, P x -> P (Psucc x)) ->
+  (forall x, P x -> P (Pos.succ x)) ->
   forall x, P x.
 Proof.
   intros.
@@ -350,7 +350,7 @@ Lemma two_p_monotone_strict:
 Proof.
   intros. assert (two_p x <= two_p (y - 1)). apply two_p_monotone; omega.
   assert (two_p (y - 1) > 0). apply two_p_gt_ZERO. omega.
-  replace y with (Zsucc (y - 1)) by omega. rewrite two_p_S. omega. omega.
+  replace y with (Z.succ (y - 1)) by omega. rewrite two_p_S. omega. omega.
 Qed.
 
 Lemma two_p_strict:
@@ -375,35 +375,35 @@ Qed.
 (** Properties of [Zmin] and [Zmax] *)
 
 Lemma Zmin_spec:
-  forall x y, Zmin x y = if zlt x y then x else y.
+  forall x y, Z.min x y = if zlt x y then x else y.
 Proof.
-  intros. case (zlt x y); unfold Zlt, Zge; intro z.
-  unfold Zmin. rewrite z. auto.
-  unfold Zmin. caseEq (x ?= y); intro.
+  intros. case (zlt x y); unfold Z.lt, Z.ge; intro z.
+  unfold Z.min. rewrite z. auto.
+  unfold Z.min. caseEq (x ?= y); intro.
   apply Zcompare_Eq_eq. auto.
   contradiction.
   reflexivity.
 Qed.
 
 Lemma Zmax_spec:
-  forall x y, Zmax x y = if zlt y x then x else y.
+  forall x y, Z.max x y = if zlt y x then x else y.
 Proof.
-  intros. case (zlt y x); unfold Zlt, Zge; intro z.
-  unfold Zmax. rewrite <- (Zcompare_antisym y x).
+  intros. case (zlt y x); unfold Z.lt, Z.ge; intro z.
+  unfold Z.max. rewrite <- (Zcompare_antisym y x).
   rewrite z. simpl. auto.
-  unfold Zmax. rewrite <- (Zcompare_antisym y x).
+  unfold Z.max. rewrite <- (Zcompare_antisym y x).
   caseEq (y ?= x); intro; simpl.
   symmetry. apply Zcompare_Eq_eq. auto.
   contradiction. reflexivity.
 Qed.
 
 Lemma Zmax_bound_l:
-  forall x y z, x <= y -> x <= Zmax y z.
+  forall x y z, x <= y -> x <= Z.max y z.
 Proof.
   intros. generalize (Zmax1 y z). omega.
 Qed.
 Lemma Zmax_bound_r:
-  forall x y z, x <= z -> x <= Zmax y z.
+  forall x y z, x <= z -> x <= Z.max y z.
 Proof.
   intros. generalize (Zmax2 y z). omega.
 Qed.
@@ -498,7 +498,7 @@ Proof.
   split.
   assert (lo < (q + 1)).
   apply Zmult_lt_reg_r with b. omega.
-  apply Zle_lt_trans with a. omega.
+  apply Z.le_lt_trans with a. omega.
   replace ((q + 1) * b) with (b * q + b) by ring.
   omega.
   omega.
@@ -585,9 +585,9 @@ Proof.
 Qed.
 
 Lemma nat_of_Z_max:
-  forall z, Z_of_nat (nat_of_Z z) = Zmax z 0.
+  forall z, Z_of_nat (nat_of_Z z) = Z.max z 0.
 Proof.
-  intros. unfold Zmax. destruct z; simpl; auto.
+  intros. unfold Z.max. destruct z; simpl; auto.
   change (Z.of_nat (Z.to_nat (Zpos p)) = Zpos p).
   apply Z2Nat.id. compute; intuition congruence.
 Qed.
@@ -601,7 +601,7 @@ Qed.
 Lemma nat_of_Z_neg:
   forall n, n <= 0 -> nat_of_Z n = O.
 Proof.
-  destruct n; unfold Zle; simpl; auto. congruence.
+  destruct n; unfold Z.le; simpl; auto. congruence.
 Qed.
 
 Lemma nat_of_Z_plus:
@@ -697,7 +697,7 @@ Hint Resolve nth_error_nil: coqlib.
 Fixpoint list_length_z_aux (A: Type) (l: list A) (acc: Z) {struct l}: Z :=
   match l with
   | nil => acc
-  | hd :: tl => list_length_z_aux tl (Zsucc acc)
+  | hd :: tl => list_length_z_aux tl (Z.succ acc)
   end.
 
 Remark list_length_z_aux_shift:
@@ -706,7 +706,7 @@ Remark list_length_z_aux_shift:
 Proof.
   induction l; intros; simpl.
   omega.
-  replace (n - m) with (Zsucc n - Zsucc m) by omega. auto.
+  replace (n - m) with (Z.succ n - Z.succ m) by omega. auto.
 Qed.
 
 Definition list_length_z (A: Type) (l: list A) : Z :=
@@ -741,7 +741,7 @@ Qed.
 Fixpoint list_nth_z (A: Type) (l: list A) (n: Z) {struct l}: option A :=
   match l with
   | nil => None
-  | hd :: tl => if zeq n 0 then Some hd else list_nth_z tl (Zpred n)
+  | hd :: tl => if zeq n 0 then Some hd else list_nth_z tl (Z.pred n)
   end.
 
 Lemma list_nth_z_in:
