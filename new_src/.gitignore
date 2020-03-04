@@ -33,3 +33,10 @@ nra.cache
 *.vo
 *.vos
 *.vok
+
+#Make
+.Makefile.d
+.coqdeps.d
+Makefile.conf
+
+#Haskell
