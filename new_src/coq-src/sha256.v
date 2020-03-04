@@ -154,7 +154,7 @@ h6 <= val h6';;
 h7 <= val h7';;
           
 (* Copy chunk into first 16 words of w. *)
-iter 0 16 (fun i => w@'i <- m[[''(i)]]);;
+iter 0%Z 16%Z (fun i => w@'i <- m[[''(i)]]);;
 
 (* Extend the first 16 words into the remaining 48 words w[16..63] of the message schedule array: *)
 iter 16 64 (fun i =>

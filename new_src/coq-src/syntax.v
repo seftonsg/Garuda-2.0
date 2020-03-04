@@ -4,11 +4,14 @@ Unset Strict Implicit.
 Require Import Integers.
 Require Import lang.
 
+Declare Scope hdl_type_scope.
 Notation "'tbit'" := (TBit) (at level 60) : hdl_type_scope.
 Notation "'tvec32'" := (TVec32) (at level 60) : hdl_type_scope.
 Notation "'tvec64'" := (TVec64) (at level 60) : hdl_type_scope.
 Notation "'tarr' N <<< t >>>" := (TArr N t) (at level 60, right associativity) : hdl_type_scope.
+Close Scope hdl_type_scope.
 
+Declare Scope hdl_exp_scope.
 Notation "'val' v" := (EVal v) (at level 59) : hdl_exp_scope.
 Notation "'var' x" := (EVar x) (at level 59) : hdl_exp_scope.
 Notation "e [[ i ]]" := (EDeref i e) (at level 60) : hdl_exp_scope.
@@ -19,8 +22,11 @@ Notation "e1 'xor' e2" := (EBinop OXor e1 e2) (at level 61) : hdl_exp_scope.
 Notation "e1 'plus' e2" := (EBinop OAddu e1 e2) (at level 61) : hdl_exp_scope.
 Notation "e1 'lt' e2" := (EBinop OLt e1 e2) (at level 61) : hdl_exp_scope.
 Notation "'not' e" := (ENot e) (at level 60) : hdl_exp_scope.
+Close Scope hdl_exp_scope.
 
+Declare Scope hdl_stmt_scope.
 Notation "x <= e" := (SAssign x e) (at level 70) : hdl_stmt_scope. (*TODO: change to ::= to avoid confusion with Verilog nonblocking assignments*)
+Close Scope hdl_stmt_scope.
 Definition iter (lo hi:nat) (f:iN hi -> stmt) := @SIter lo hi f.
 Arguments iter lo hi f : clear implicits.
 Notation "x @ i <- e" := (SUpdate x i e) (at level 70).
