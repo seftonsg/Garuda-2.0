@@ -1,3 +1,12 @@
-*.hs
-Makefile.conf
+#Coq
+*.vo
+*.vos
+*.vok
+
+#Make
+.Makefile.d
 .coqdeps.d
+Makefile.conf
+
+#Haskell
+*.hs
