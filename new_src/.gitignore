@@ -40,3 +40,4 @@ nra.cache
 Makefile.conf
 
 #Haskell
+*.hs
