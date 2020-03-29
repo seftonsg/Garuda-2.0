@@ -15,7 +15,7 @@ Make sure .coqdeps.d is defined by running coqdep.
 
 Then run coq_makefile.
 ```
-coqdep * > .coqdep.d; \
+coqdep * > .coqdeps.d; \
 coq_makefile *.v -o Makefile
 ```
 
