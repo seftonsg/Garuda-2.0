@@ -59,7 +59,8 @@
                     &       & $\mid$ & $inj_{r}$          & \textit{Injection Result} \\
                     &       & $\mid$ & $f \leftarrow n$   & \textit{Update}   \\
                     &       & $\mid$ & $p + q$            & \textit{Choice}   \\
-                    &       & $\mid$ & $p \cdot q$        & \textit{Sequential Concatenation}
+                    &       & $\mid$ & $p \cdot q$        & \textit{Sequential Concatenation} \\
+                    &       & $\mid$ & $stall(a)$         & \textit{Stall Until}
     \end{tabular}\\
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%% END OF SECTION 1 %%%
@@ -159,7 +160,16 @@
         \interp { p \cdot q }(\mathit{is}, \mathit{rs})
             \triangleq\ &
             \mathsf{let}\ (S_i, S_r) = \interp{p}(is, rs)\\
-            &\mathsf{in}\ \bigcup \{\interp{q}(\mathit{is}',\mathit{rs}')\ |\ \mathit{is}'\in S_i, \mathit{rs'}\in S_r\}
+            &\mathsf{in}\ \bigcup \{\interp{q}(\mathit{is}',\mathit{rs}')\ |\ \mathit{is}'\in S_i, \mathit{rs'}\in S_r\}\\
+        %Stall
+        %% Would this be done better with a map of some sort?
+        %% Could this just be implemented as inject_i(0) with some sort of loop?
+        %% Therefore, no stall instr, just an ability to loop?  Do we just bring
+        %% back the kleene star?
+        \interp {stall(a)}(\mathit{is}, \mathit{rs})
+            \triangleq\ &
+            \mathsf{while} (\neg a)\\
+            &(\emptyset,\{\mathit{rs}\})
             \\
             \\
     %\end{align*}
