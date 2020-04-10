@@ -361,20 +361,7 @@
   Additionally, you prohibit any tainted instructions or addresses from accessing memory.
   In \sysname, we can define this as follows.
   Please note that $\mathsf{ALU}$ can further be expanded to specific types of ALU instructions
-
-% Definition rs_taint := TaintBit (ofromz 63).
-% Definition rt_taint := TaintBit (ofromz 62).  
-% Definition pc_taint := TaintBit (ofromz 61).
-% Definition TAINTED := ofromz 1.
-% Definition NOT_TAINTED := ofromz 0.  
-% Definition tainted_Itype: pred TVec64 :=
-%   BField pc_taint TAINTED `orpred` BField rs_taint TAINTED.
-% Definition tainted_Rtype: pred TVec64 := BField rt_taint TAINTED.  
-% Definition taint64: pol TVec64 TVec64 :=
-%   `IF` tainted_Itype `orpred` (R_type `andpred` tainted_Rtype)
-%    `THEN` PUpd (fun _ => EVal TAINTED)
-%    `ELSE` PUpd (fun _ => EVal NOT_TAINTED).
-
+  
   \[
   \begin{array}{r c l}
     %Define inputs
