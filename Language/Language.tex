@@ -361,7 +361,7 @@
   Additionally, you prohibit any tainted instructions or addresses from accessing memory.
   In \sysname, we can define this as follows.
   Please note that $\mathsf{ALU}$ can further be expanded to specific types of ALU instructions
-  
+
   \[
   \begin{array}{r c l}
     %Define inputs
@@ -381,15 +381,15 @@
 
     %Rule
     \mathsf{PropTaintALU} &\triangleq&
-      %% is this really an injection of an instruction, or directly changing part of the op code?
-      %% Can garuda automatically determine between "inject(instruction)" and "inject(change Instruction Field)"
-      %% This becomes a mutate, rather than an injection, doesn't it?  Intermediate should take care of that
-      act(\mathsf{Arith})\cdot act(\mathsf{TaintedInstr})\cdot \mathit{inj}_{i}(\mathsf{TaintRes})\\
+      %% Formerly injected TaintRes, but update (\leftarrow) is a policy of its own that operates on fields
+      act(\mathsf{Arith}\cdot \mathsf{TaintedInstr}\cdot \mathsf{TaintRes})\\
       &&+
-      act(\mathsf{Arith})\cdot act(\neg \mathsf{TaintedInstr})\\
+      act(\mathsf{Arith}\cdot \neg \mathsf{TaintedInstr})\\
     \mathsf{NoTaintMem} &\triangleq&
-      act(\mathsf{AnyMem})\cdot act(\neg \mathsf{TaintedInstr})\\
-    \mathsf{SecureMem} &\triangleq& \mathsf{PropTaintALU} + \mathsf{NoTaintMem}
+      act(\mathsf{AnyMem}\cdot \neg \mathsf{TaintedInstr})\\
+    \mathsf{SecureMem} &\triangleq& \mathsf{PropTaintALU} + \mathsf{NoTaintMem}\\
+      &&+
+      act(\neg (\mathsf{Arith} + \mathsf{AnyMem}))
   \end{array}
   \]\\
 
