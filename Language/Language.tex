@@ -21,8 +21,8 @@
 
 %Custom Commands%
   \newcommand\interp[1]{\llbracket #1 \rrbracket}
-  \def \sysname {\textsc{GARUDA 2.0}\xspace}
-  \def \oldname {\textsc{GARUDA}\xspace}
+  \def \sysname {\textsc{GARUDA 2.0}}
+  \def \oldname {\textsc{GARUDA}}
 
 \begin{document}
 
@@ -353,26 +353,58 @@
   This caused no hardware overhead to maintain in the pipeline, but imposed an obvious bit-resolution hindrance.
   In \sysname, the definition of such a policy is identical, but the compilation is different.
 
- \[
- \begin{array}{rcl}
-   \mathit{Instruction\ Fields}\ f_i &::=& \mathsf{Lock_{Instr}}, \mathsf{OP}\\
-   \mathsf{OP} &::=& \mathsf{MEM_{READ}}\ |\ \mathsf{MEM_{WRITE}}\ |\ \cdots \\
-   \mathit{Result\ Fields}\ f_r &::=& \mathsf{Lock_{MemAddr}}\\
-   \mathsf{LockedInstr} &\triangleq& \mathsf{Lock_{Instr}} = \mathsf{TRUE} \\
-   \mathsf{LockedMem} &\triangleq& \mathsf{Lock_{MemAddr}} = \mathsf{TRUE} \\
-   \mathsf{Read} &\triangleq& \mathsf{OP} = \mathsf{MEM_{READ}}\\
-   \mathsf{Write} &\triangleq& \mathsf{OP} = \mathsf{MEM_{WRITE}}\\
-   \mathsf{MemLock} &\triangleq& \mathsf{Lock_{MemAddr}} \leftarrow \mathsf{TRUE}\\ 
-   %Rule
-   \mathsf{LockSecure} &\triangleq& 
-   act(\mathsf{LockedInstr})\cdot res(\mathsf{LockedMem})\\
-   &&+
-   act(\mathsf{LockedInstr})\cdot res(\neg \mathsf{LockedMem}) \cdot \mathit{inj_{\mathsf{MemLock}}} \\
-   \mathsf{LockInsecure} &\triangleq&
-    act(\neg \mathsf{LockedInstr})\cdot res(\neg \mathsf{LockedMem})\\
-   \mathsf{Locked} &\triangleq& \mathsf{LockSecure} + \mathsf{LockInsecure}
- \end{array}
- \]\\
+  We assume a MIPS-like architecture for this example.
+  The op codes of any given instruction are no more than 3; $\mathsf{IN_1}$, $\mathsf{IN_2}$, and $\mathsf{OUT}$
+  We denote these as $\mathsf{RS}$, $\mathsf{RT}$, and $\mathsf{RD}$.
+
+  Let's suppose you want your taint to propogate on the inputs of any arithmetic instructions.
+  Additionally, you prohibit any tainted instructions or addresses from accessing memory.
+  In \sysname, we can define this as follows.
+  Please note that $\mathsf{ALU}$ can further be expanded to specific types of ALU instructions
+
+% Definition rs_taint := TaintBit (ofromz 63).
+% Definition rt_taint := TaintBit (ofromz 62).  
+% Definition pc_taint := TaintBit (ofromz 61).
+% Definition TAINTED := ofromz 1.
+% Definition NOT_TAINTED := ofromz 0.  
+% Definition tainted_Itype: pred TVec64 :=
+%   BField pc_taint TAINTED `orpred` BField rs_taint TAINTED.
+% Definition tainted_Rtype: pred TVec64 := BField rt_taint TAINTED.  
+% Definition taint64: pol TVec64 TVec64 :=
+%   `IF` tainted_Itype `orpred` (R_type `andpred` tainted_Rtype)
+%    `THEN` PUpd (fun _ => EVal TAINTED)
+%    `ELSE` PUpd (fun _ => EVal NOT_TAINTED).
+
+  \[
+  \begin{array}{r c l}
+    %Define inputs
+    \mathit{Instruction\ Fields}\ f_i &::=& \mathsf{Taint_{RS}}, \mathsf{Taint_{RT}}, \mathsf{Taint_{RD}}, \mathsf{OP}\\
+    \mathsf{OP} &::=& \mathsf{MEM_{READ}}\ |\ \mathsf{MEM_{WRITE}}\ |\ \mathsf{ALU} |\ \cdots \\
+    \mathit{Result\ Fields}\ f_r &::=& \mathsf{(*empty*)}\\\\
+
+    %Op Types
+    \mathsf{Arith}   &\triangleq& \mathsf{OP} = \mathsf{ALU}\\
+    \mathsf{Read}    &\triangleq& \mathsf{OP} = \mathsf{MEM_{READ}}\\
+    \mathsf{Write}   &\triangleq& \mathsf{OP} = \mathsf{MEM_{WRITE}}\\
+    \mathsf{AnyMem}  &\triangleq& \mathsf{Read} + \mathsf{Write}\\\\
+
+    %Sub Rules
+    \mathsf{TaintedInstr} &\triangleq& ( \mathsf{Taint_{RS}} = \mathsf{TRUE} ) + ( \mathsf{Taint_{RT}} = \mathsf{TRUE} )\\
+    \mathsf{TaintRes}     &\triangleq& \mathsf{Taint_{RD}} \leftarrow \mathsf{TRUE}\\\\
+
+    %Rule
+    \mathsf{PropTaintALU} &\triangleq&
+      %% is this really an injection of an instruction, or directly changing part of the op code?
+      %% Can garuda automatically determine between "inject(instruction)" and "inject(change Instruction Field)"
+      %% This becomes a mutate, rather than an injection, doesn't it?  Intermediate should take care of that
+      act(\mathsf{Arith})\cdot act(\mathsf{TaintedInstr})\cdot \mathit{inj}_{i}(\mathsf{TaintRes})\\
+      &&+
+      act(\mathsf{Arith})\cdot act(\neg \mathsf{TaintedInstr})\\
+    \mathsf{NoTaintMem} &\triangleq&
+      act(\mathsf{AnyMem})\cdot act(\neg \mathsf{TaintedInstr})\\
+    \mathsf{SecureMem} &\triangleq& \mathsf{PropTaintALU} + \mathsf{NoTaintMem}
+  \end{array}
+  \]\\
 
 
 
