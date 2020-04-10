@@ -26,11 +26,21 @@
 
 \begin{document}
 
+%%%%%%%%%%%%%%%%%%%%%%%%
+%%% BEGIN TITLE PAGE %%%
+%%%%%%%%%%%%%%%%%%%%%%%%
+
+TitlePage.jpeg
+
+%%%%%%%%%%%%%%%%%%%%%%
+%%% END TITLE PAGE %%%
+%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %%% BEGIN SECTION 1 %%%
 %%% GARUDA SYNTAX   %%%
 %%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
 \section{Syntax}
 
   %Definitions table
@@ -184,17 +194,15 @@
 %%% BEGIN SECTION 3     %%%
 %%% INTERMEDIATE SYNTAX %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newpage
+\cleardoublepage
 \section{Intermediate Syntax}
 
-  %Definitions table
-  \begin{tabular}{l r c l}
-    Values        & $v$     & $::=$     & $\mathsf{INSTR\ |\ RES}$\\
-    Registers     & $b$     & $::=$     & $\mathsf{reg}$
-  \end{tabular}\\
-
-  %Predicates table
-  \begin{tabular}{l c r l l}
+  \begin{tabular}{l r r l l}
+    %Definitions table
+    Values        & $v$     & $::=$     & $\mathsf{INSTR\ |\ RES}$ &\\
+    Registers     & $b$     & $::=$     & $\mathsf{reg}$           &\\
+    \\
+    %Predicates table
     Expressions & $e$ & $::=$  & $read(b)$       
                       & \textit{Read Reg}\\
                 &     & $\mid$ & $write(b,v)$    
@@ -224,7 +232,6 @@
 %%% BEGIN SECTION 4          %%%
 %%% INTERMEDIATE COMPILATION %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newpage
 \section{Intermediate Semantics}
   Assume all $\mathbf{C}$ is short for $\mathbf{C}_{(i_{in},i_{out},r_{in},r_{out})}$ if unspecified.
   {\fontsize{12pt}{14pt}\selectfont
@@ -259,6 +266,8 @@
        &if\ r_{in}=n\ then\\
        &\quad write(r_{out}, read(r_{in}))\\
        &\quad else\ \mathbf{C}_{(-, -, r_{in}, r_{out}})[0]\\
+  \end{align*}
+  \begin{align*}
      %Predicate Addition
     \mathbf{C}[\mathsf{test}(a + b)]\ 
       =\ &
@@ -267,8 +276,6 @@
       &let\ e_a = \mathbf{C}_{(e_{aii},e_{aio},e_{ari},e_{aro})}[a]\\
       &\quad\ \ e_b = \mathbf{C}_{(e_{bii},e_{bio},e_{bri},e_{bro})}[b]\\
       &in\ Mux(e_a\ \ e_b, (i_{out},r_{out}))\\
-  \end{align*}
-  \begin{align*}
     %Predicate Product
     \mathbf{C}[\mathsf{test}(a \cdot b)]\ 
        =\ &\mathbf{C}[\mathsf{test}(a) \cdot \mathsf{test}(b)] \\
@@ -334,7 +341,7 @@
     %Define filter
     %Define map
   \end{align*}
- }
+  }
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% END OF SECTION 4         %%%
 %%% INTERMEDIATE COMPILATION %%%
@@ -344,7 +351,7 @@
 %%% BEGIN SECTION 5 %%%
 %%% APPLICATIONS    %%%
 %%%%%%%%%%%%%%%%%%%%%%%
-
+\clearpage
 \section{Applications of \sysname}
 
 \subsection{Standard Taint}
