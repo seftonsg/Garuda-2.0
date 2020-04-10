@@ -29,35 +29,34 @@
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%% BEGIN TITLE PAGE %%%
 %%%%%%%%%%%%%%%%%%%%%%%%
-\title{\sysname}
-\date{2020\\ Spring}
+  \title{\sysname}
+  \date{2020\\ Spring}
 
-\author{
-  Sage Sefton \\
-  ss557415@ohio.edu \\
-  Ohio University \\
-  \and
-  Avinash Karanth  \\
-  karanth@ohio.edu \\
-  Ohio University  \\
-  \and
-  Gordon Stewart \\
-  gstewart@ohio.edu \\
-  Ohio University
-}
+  \author{
+    Sage Sefton \\
+    ss557415@ohio.edu \\
+    Ohio University \\
+    \and
+    Avinash Karanth  \\
+    karanth@ohio.edu \\
+    Ohio University  \\
+    \and
+    Gordon Stewart \\
+    gstewart@ohio.edu \\
+    Ohio University
+  }
 
-\maketitle
-
+  \maketitle
 %%%%%%%%%%%%%%%%%%%%%%
 %%% END TITLE PAGE %%%
 %%%%%%%%%%%%%%%%%%%%%%
 
+\cleardoublepage
+\section{Syntax}
 %%%%%%%%%%%%%%%%%%%%%%%
 %%% BEGIN SECTION 1 %%%
 %%% GARUDA SYNTAX   %%%
 %%%%%%%%%%%%%%%%%%%%%%%
-\cleardoublepage
-\section{Syntax}
 
   %Definitions table
   \begin{tabular}{l r c l}
@@ -95,12 +94,13 @@
 %%%%%%%%%%%%%%%%%%%%%%%%
 
 
+\newpage
+\section{Semantics}
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%% BEGIN SECTION 2  %%%
 %%% GARUDA SEMANTICS %%%
 %%%%%%%%%%%%%%%%%%%%%%%%
-\newpage
-\section{Semantics}
+
   %{\fontsize{12pt}{14pt}\selectfont
   %Semantics align
   \begin{align*}
@@ -206,12 +206,12 @@
 %%%%%%%%%%%%%%%%%%%%%%%%
 
 
+\cleardoublepage
+\section{Intermediate Syntax}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% BEGIN SECTION 3     %%%
 %%% INTERMEDIATE SYNTAX %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-\cleardoublepage
-\section{Intermediate Syntax}
 
   \begin{tabular}{l r r l l}
     %Definitions table
@@ -244,11 +244,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+\section{Intermediate Semantics}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% BEGIN SECTION 4          %%%
 %%% INTERMEDIATE COMPILATION %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Intermediate Semantics}
   Assume all $\mathbf{C}$ is short for $\mathbf{C}_{(i_{in},i_{out},r_{in},r_{out})}$ if unspecified.
   {\fontsize{12pt}{14pt}\selectfont
   %Semantics align
@@ -363,14 +363,18 @@
 %%% INTERMEDIATE COMPILATION %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\clearpage
+\section{Applications of \sysname}
 %%%%%%%%%%%%%%%%%%%%%%%
 %%% BEGIN SECTION 5 %%%
 %%% APPLICATIONS    %%%
 %%%%%%%%%%%%%%%%%%%%%%%
-\clearpage
-\section{Applications of \sysname}
 
 \subsection{Standard Taint}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% BEGIN SUBSECTION 5.1 %%%
+%%% STANDARD TAINT       %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
   In the previous version of \oldname, taint was implemented by tagging the most significant bit of a register. 
   This caused no hardware overhead to maintain in the pipeline, but imposed an obvious bit-resolution hindrance.
@@ -415,7 +419,21 @@
       act(\neg (\mathsf{Arith} + \mathsf{AnyMem}))
   \end{array}
   \]\\
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% END SUBSECTION 5.1 %%%
+%%% STANDARD TAINT     %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Speculative Taint}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% BEGIN SUBSECTION 5.2 %%%
+%%% SPECULATIVE TAINT    %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% END SUBSECTION 5.2 %%%
+%%% SPECULATIVE TAINT  %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \end{document}
