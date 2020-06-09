@@ -12,7 +12,7 @@ Require Import Integers.
 Require Import lang.
 
 Inductive fld : Type :=
-    OpCode
+  | OpCode
   | Funct
   | Format
   | Rt
