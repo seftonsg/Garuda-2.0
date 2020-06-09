@@ -13,6 +13,7 @@
   \usepackage{dsfont} %for fancy set letters
   \usepackage{fancyhdr} %fancy headers
   \usepackage{color} %for things that need attention
+  \usepackage[numbers]{natbib}
   %\usepackage{array} %Include if {tabular}{>{$}c<{$}} type arrays are required
   \let\emptyset\varnothing
   \pagestyle{fancy}
@@ -430,10 +431,45 @@
 %%% SPECULATIVE TAINT    %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+  \cite{Spec_TT}
+  \[
+  \begin{array}{r c l}
+    %Define inputs
+    \mathit{Instruction\ Fields}\ f_i &::=& \mathsf{Taint_{RS}}, \mathsf{Taint_{RT}}, \mathsf{Taint_{RD}}, \mathsf{OP}\\
+    \mathsf{OP} &::=& \mathsf{MEM_{READ}}\ |\ \mathsf{MEM_{WRITE}}\ |\ \mathsf{ALU} |\ \cdots \\
+    \mathit{Result\ Fields}\ f_r &::=& \mathsf{(*empty*)}\\\\
 
+    %Op Types
+    \mathsf{Arith}   &\triangleq& \mathsf{OP} = \mathsf{ALU}\\
+    \mathsf{Read}    &\triangleq& \mathsf{OP} = \mathsf{MEM_{READ}}\\
+    \mathsf{Write}   &\triangleq& \mathsf{OP} = \mathsf{MEM_{WRITE}}\\
+    \mathsf{AnyMem}  &\triangleq& \mathsf{Read} + \mathsf{Write}\\\\
+
+    %Sub Rules
+    \mathsf{TaintedInstr} &\triangleq& ( \mathsf{Taint_{RS}} = \mathsf{TRUE} ) + ( \mathsf{Taint_{RT}} = \mathsf{TRUE} )\\
+    \mathsf{TaintRes}     &\triangleq& \mathsf{Taint_{RD}} \leftarrow \mathsf{TRUE}\\\\
+
+    %Rule
+    \mathsf{PropTaintALU} &\triangleq&
+      %% Formerly injected TaintRes, but update (\leftarrow) is a policy of its own that operates on fields
+      act(\mathsf{Arith}\cdot \mathsf{TaintedInstr}\cdot \mathsf{TaintRes})\\
+      &&+
+      act(\mathsf{Arith}\cdot \neg \mathsf{TaintedInstr})\\
+    \mathsf{NoTaintMem} &\triangleq&
+      act(\mathsf{AnyMem}\cdot \neg \mathsf{TaintedInstr})\\
+    \mathsf{SecureMem} &\triangleq& \mathsf{PropTaintALU} + \mathsf{NoTaintMem}\\
+      &&+
+      act(\neg (\mathsf{Arith} + \mathsf{AnyMem}))
+  \end{array}
+  \]\\
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% END SUBSECTION 5.2 %%%
 %%% SPECULATIVE TAINT  %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% \bibliographystyle{ACM-Reference-Format}
+% \bibliographystyle{abbrvnat}
+\bibliographystyle{plainnat}
+\bibliography{Language}
 
 \end{document}

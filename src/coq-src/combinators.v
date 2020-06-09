@@ -21,7 +21,8 @@ Inductive fld : Type :=
   | OffsetFld : Int64.int -> fld -> fld
   (*OffsetFld i f: Increase offset of f by i bits. OffsetFld is used primarily 
     to test the high-order bits of particular fields, like EffAddr.*)
-  | EffAddr.                                      
+  | EffAddr
+  | PC.                                      
 
 Fixpoint offset (f : fld) : Int64.int :=
   match f with
@@ -32,7 +33,8 @@ Fixpoint offset (f : fld) : Int64.int :=
   | ImmAddr => Int64.repr 0 
   | TaintBit off => off
   | OffsetFld i f => Int64.add i (offset f)
-  | EffAddr => Int64.repr 32                               
+  | EffAddr => Int64.repr 32  
+  | PC => Int64.repr 0                             
   end.
 
 Fixpoint size (f : fld) : Int64.int :=
@@ -44,7 +46,8 @@ Fixpoint size (f : fld) : Int64.int :=
   | ImmAddr => Int64.repr 26
   | TaintBit _ => Int64.one  (* Taint bits are always size-1 *)
   | OffsetFld _ f => size f
-  | EffAddr => Int64.repr 32                          
+  | EffAddr => Int64.repr 32 
+  | PC => Int64.repr 64                        
   end.
 
 Inductive pred {t:ty} : Type := 
@@ -612,6 +615,9 @@ Section taint.
             end).
 End taint.
 
+(*Section thesis_example.
+  Definition KernelPC := BFieldRange (ofromz 8191 (*0x0FFF*)
+*)
 Require Import extraction.
 
 (* print the program *)
