@@ -60,6 +60,22 @@
 %%%%%%%%%%%%%%%%%%%%%%%
   \section{Background}\label{sec:bkgnd}
 
+    \oldname was a system that operated on a two stream model of the "user" or program, and that which executed the instructions.
+    \sysname, we extend, or refine based on the point of view, this model to operate between the Execution (EXE) and Memory (MEM) stages of the pipeline.
+    We assume a monitor theory shown by the graphic Fig~\ref{fig:bkgnd:newmodel}.
+    The monitor appears to operate on a single stream, but the two hanging connections can be considered the two streams of the former model.
+
+    The most obvious change we need to make is to enable encryption and decryption of the EffAddr.
+    Our attack vector focuses on a trojan targeting the state register between the EXE and MEM stages.
+    They could cache these addresses and try to access that memory later, or they may try to use them as a side channel.
+    Either way, allowing an adversary to track our memory accesses is clearly problematic.
+    However, when we refer to "encryption", we really mean some reversible obfuscation function.
+    We employ the proof assistant, Coq, to prove the EN and DE blocks are exact inverses.
+    \oldname is written in Coq for exactly this reason, so requiring a proof that $\forall P, DE (EN P) = P$ should be sufficient.
+    % TODO: Check this proof format, it may be wrong
+
+
+
 %%%%%%%%%%%%%%%%%%%%%
 %%% END SECTION 1 %%%
 %%% BACKGROUND    %%%
