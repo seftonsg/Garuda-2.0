@@ -42,10 +42,10 @@
     Avinash Karanth  \\
     karanth@ohio.edu \\
     Ohio University  \\
-    \and
-    Gordon Stewart \\
-    gstewart@ohio.edu \\
-    Ohio University
+  %  \and
+  %  Gordon Stewart \\
+  %  gstewart@ohio.edu \\
+  %  Ohio University
   }
 
   \maketitle
@@ -86,147 +86,174 @@
 %%% BEGIN SECTION 2  %%%
 %%% GARUDA SPECIFICS %%%
 %%%%%%%%%%%%%%%%%%%%%%%%
-  \section{Syntax}\label{sec:}
-    %Definitions table
-    \begin{tabular}{l r c l}
-      Instruction Fields   & $f_{i}$   & $::=$     & $f_{i_{1}} \mid \dots \mid f_{i_{k}}$\\
-      Result Fields        & $f_{r}$   & $::=$     & $f_{r_{1}} \mid \dots \mid f_{r_{k}}$\\
-      Fields               & $f$       & $::=$     & $f_i \mid f_r$ \\
-      Instructions         & $i$       & $::=$     & $\{f_{i_{1}} = v_{i_{1}} ,\ \dots\ ,\ f_{i_{k}} = v_{i_{k}}\}$\\
-      Results              & $r$       & $::=$     & $\{f_{r_{1}} = v_{r_{1}} ,\ \dots\ ,\ f_{r_{k}} = v_{r_{k}}\}$\\
-    \end{tabular}\\
+  \section{The Implementation of \sysname}\label{sec:spec}
 
-    %Predicates table
-    \begin{tabular}{l c r l l}
-      Predicates  & $a,b$     & $::=$  & $0$          & \textit{False} \\
-                  &           & $\mid$ & $1$          & \textit{Identity}    \\
-                  &           & $\mid$ & $f=n$        & \textit{Test} \\  
-                  &           & $\mid$ & $a + b$      & \textit{Sum}      \\
-                  &           & $\mid$ & $a \cdot b$  & \textit{Product}  \\
-                  &           & $\mid$ & $\neg \ a$   & \textit{Negation}
-    \end{tabular}\\
+  %%%%%%%%%%%%%%%%%%%%%%%%%
+  %%% BEGIN SECTION 2.1 %%%
+  %%% GARUDA SYNTAX     %%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%
+    \subsection{Syntax}\label{sec:spec:synt}
+      \subsubsection{Definitions}\label{sec:spec:synt:defn}
+        %Definitions table
+        \begin{figure}
+          \centering
+          \begin{tabular}{l r c l}
+            Instruction Fields & $f_{i}$ & $::=$ & $f_{i_{1}} \mid \dots \mid f_{i_{k}}$\\
+            Result Fields      & $f_{r}$ & $::=$ & $f_{r_{1}} \mid \dots \mid f_{r_{k}}$\\
+            Fields             & $f$     & $::=$ & $f_i \mid f_r$ \\
+            Instructions       & $i$     & $::=$ & $\{f_{i_{1}} = v_{i_{1}} ,\ \dots\ ,\ f_{i_{k}} = v_{i_{k}}\}$\\
+            Results            & $r$     & $::=$ & $\{f_{r_{1}} = v_{r_{1}} ,\ \dots\ ,\ f_{r_{k}} = v_{r_{k}}\}$\\
+            Obfuscation Fxn    & $ob{}$  & $::=$ & $fxn(f_i) \mid fxn(f_o)$
+            % TODO: how do we define state in and state out?i
+          \end{tabular}
+          \caption{Definitions in \sysname.}
+          \label{fig:spec:synt:defn}
+        \end{figure}
 
-    %Policies table
-    \begin{tabular}{l c r l l}
-      Policies  & $p,q$ & $::=$  & $\mathbf{test}(a)$ & \textit{Test}     \\
-                &       & $\mid$ & $act(p)$           & \textit{Slice Actions}    \\
-                &       & $\mid$ & $res(p)$           & \textit{Slice Results}    \\
-                &       & $\mid$ & $inj_{i}$          & \textit{Injection Action} \\
-                &       & $\mid$ & $inj_{r}$          & \textit{Injection Result} \\
-                &       & $\mid$ & $f \leftarrow n$   & \textit{Update}   \\
-                &       & $\mid$ & $p + q$            & \textit{Choice}   \\
-                &       & $\mid$ & $p \cdot q$        & \textit{Sequential Concatenation} \\
-    \end{tabular}\\
-%%%%%%%%%%%%%%%%%%%%%%%%
-%%% END SECTION 2    %%%
-%%% GARUDA SPECIFICS %%%
-%%%%%%%%%%%%%%%%%%%%%%%%
+      \subsubsection{Syntax of Predicates}\label{sec:spec:synt:pred}
+        %Predicates table
+        \begin{figure}
+          \centering
+          \begin{tabular}{l c r l l}
+            Predicates  & $a,b$ & $::=$  & $0$          & \textit{False}    \\
+                        &       & $\mid$ & $1$          & \textit{Identity} \\
+                        &       & $\mid$ & $f = n$      & \textit{Test}     \\
+                        &       & $\mid$ & $a + b$      & \textit{Sum}      \\
+                        &       & $\mid$ & $a \cdot b$  & \textit{Product}  \\
+                        &       & $\mid$ & $\neg\ a$    & \textit{Negation}
+          \end{tabular}
+          \caption{TODO}
+          \label{fig:spec:synt:pred}
+        \end{figure}
 
-%%%%%%%%%%%%%%%%%%%%%%%%
-%%% BEGIN SECTION 3  %%%
-%%% GARUDA SEMANTICS %%%
-%%%%%%%%%%%%%%%%%%%%%%%%
-  \clearpage
-  \section{Semantics}
+      \subsubsection{Syntax of Policies}\label{sec:spec:synt:pol}
+        %Policies table
+        \begin{figure}
+          \centering
+          \begin{tabular}{l c r l l}
+            Policies  & $p,q$ & $::=$  & $\mathbf{test}(a)$ & \textit{Test}     \\
+                      &       & $\mid$ & $obf(fxn(f_i), fxn(f_o))$        & \textit{Obfuscate} \\
+                      &       & $\mid$ & $inj_{eo}$         & \textit{Injection Execution Output} \\
+                      % alternatively: Injection to State Register (inj_{i})
+                      &       & $\mid$ & $inj_{mi}$         & \textit{Injection Memory Input} \\
+                      % alternatively: Injection from State Register (inj_{o})
+                      &       & $\mid$ & $f \leftarrow n$   & \textit{Update}   \\
+                      &       & $\mid$ & $p + q$            & \textit{Choice}   \\
+                      &       & $\mid$ & $p \cdot q$        & \textit{Sequential Concatenation} \\
+          \end{tabular}
+          \caption{TODO}
+          \label{fig:spec:synt:pol}
+        \end{figure}
+  %%%%%%%%%%%%%%%%%%%%%%%
+  %%% END SECTION 2.1 %%%
+  %%% GARUDA SYNTAX   %%%
+  %%%%%%%%%%%%%%%%%%%%%%%
 
-  %{\fontsize{12pt}{14pt}\selectfont
-  %Semantics align
-  \begin{align*}
-    %
-    \interp{ \cdot }\ 
-      :\ \ &
-      \mathbf{Stream}(I)\times \mathbf{Stream}(R) \rightarrow \\
-      & P(\mathbf{Stream}(I))\times P(\mathbf{Stream}(R)) 
-      \\
-    %Falsity
-    \interp{ 0 }(-, -)
-      \triangleq\ &
-      (\emptyset , \emptyset)
-      \\ %or null-stream?
-    %Identity
-    \interp{ 1 }(\mathit{is}, \mathit{rs})
-      \triangleq\ &
-      (\{\mathit{is}\},\{\mathit{rs}\})
-      \\
-    %Test
-    \interp{ f=n }(\mathit{is}, \mathit{rs})
-      \triangleq\ &
-      (\mathsf{filter}\ (f=n)\ \{\mathit{is}\},\
-       \mathsf{filter}\ (f=n)\ \{\mathit{rs}\}) 
-      \\
-    %Sum
-    \interp{ a + b }(\mathit{is}, \mathit{rs})
-      \triangleq\ &
-      \interp { a }(\mathit{is}, \mathit{rs})\cup
-      \interp { b }(\mathit{is}, \mathit{rs}) \\
-      &\mathsf{where}\ (S_i^1, S_r^1)\cup (S_i^2, S_r^2)\triangleq
-        (S_i^1\cup S_i^2, S_r^1\cup S_r^2)\\
-    %Product
-    \interp { a \cdot b }(\mathit{is}, \mathit{rs})
-      \triangleq\ &
-      \interp { a }(\mathit{is}, \mathit{rs})\cap
-      \interp { b }(\mathit{is}, \mathit{rs}) \\
-      &\mathsf{where}\ (S_i^1, S_r^1)\cap (S_i^2, S_r^2)\triangleq
-        (S_i^1\cap S_i^2, S_r^1\cap S_r^2)\\
-    %Negation
-    \interp { \neg a }(\mathit{is}, \mathit{rs})
-      \triangleq\ &
-      \mathsf{let}\ (S_i, S_r) = \interp {a}(\mathit{is}, \mathit{rs}) \\
-      &\mathsf{in}\ (\{\mathit{is}\} - S_i, \{\mathit{rs}\} - S_r)
-      \\
-    %Action-only Slice
-    \interp { act(p) }(\mathit{is}, \mathit{rs})
-      \triangleq\ &
-      \mathsf{let}\ (S_i,S_r) = \interp {p}(\mathit{is}, \mathit{rs})\ 
-      \mathsf{in}\ (S_i, \{\mathit{rs}\})
-      \\
-    %Result-only Slice
-    \interp { res(p) }(\mathit{is}, \mathit{rs})
-      \triangleq\ &
-      \mathsf{let}\ (S_i,S_r) = \interp {p}(\mathit{is}, \mathit{rs})\ 
-      \mathsf{in}\ (\{\mathit{is}\}, S_r)
-      \\
-    %Injection Action
-    \interp { inj_{i}(i) }(\mathit{is}, \mathit{rs})
-      \triangleq\ &
-      (\{\mathit{i : is}\}, \{\mathit{rs}\}) 
-      %or ::?  ; is sequential
-      \\
-    %Injection Result
-    \interp { inj_{r}(r) }(\mathit{is}, \mathit{rs})
-      \triangleq\ &
-      (\{\mathit{is}\},\{ \mathit{r : rs}\})
-      \\
-    %Modification
-    \interp { f \leftarrow n }(is, rs)
-      \triangleq\ &
-      (\mathsf{map}\ (f\leftarrow n)\ \{is\},\
-       \mathsf{map}\ (f\leftarrow n)\ \{rs\})
-      \\ % could use editing?
-    %Policy Union
-    \interp { p + q }(\mathit{is}, \mathit{rs})
-      \triangleq\ &
-      \interp { p }(\mathit{is}, \mathit{rs})\cup
-      \interp { q }(\mathit{is}, \mathit{rs}) \\
-      &\mathsf{where}\ (S_i^1, S_r^1)\cup (S_i^2, S_r^2)\triangleq
-        (S_i^1\cup S_i^2, S_r^1\cup S_r^2)\\
-      %A union of the streams gives a nondeterministic machine.
-    %Policy Concatnation
-    \interp { p \cdot q }(\mathit{is}, \mathit{rs})
-      \triangleq\ &
-      \mathsf{let}\ (S_i, S_r) = \interp{p}(is, rs)\\
-      &\mathsf{in}\ \bigcup \{\interp{q}(\mathit{is}',\mathit{rs}')\ |\ \mathit{is}'\in S_i, \mathit{rs'}\in S_r\}\\
-      \\
-  %\end{align*}
-  %\begin{align*}
-    %Defn. of Filter
-    \interp{\mathsf{filter}\ f}(S)
-      \triangleq\ & \{l \in S\ |\ f(l) = \mathsf{true}\}\\
-    %Defn. of Map
-    \interp{\mathsf{map}\ g}(S)
-      \triangleq\ &
-      \{ g(l)\ |\ l\in S \} 
-  \end{align*}
+  %%%%%%%%%%%%%%%%%%%%%%%%%
+  %%% BEGIN SECTION 2.2 %%%
+  %%% GARUDA SEMANTICS  %%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%
+    \clearpage
+    \subsection{Semantics}\label{sec:spec:sem}
+      \subsubsection{Semantics of Predicates}\label{sec:spec:sem:pred}
+    
+        %Semantics of Predicates
+        \begin{figure}
+          \centering
+          \begin{align*}
+            % Theory
+            \interp{ \cdot }\ 
+              :\ \ &
+              \mathbf{Stream}(I)\times \mathbf{Stream}(R) \rightarrow \\
+              & P(\mathbf{Stream}(I))\times P(\mathbf{Stream}(R)) 
+              \\
+            % Falsity
+            \interp{ 0 }(-, -)
+              \triangleq\ &
+              (\emptyset , \emptyset)
+              \\ % or null-stream?
+            % Identity
+            \interp{ 1 }(\mathit{is}, \mathit{rs})
+              \triangleq\ &
+              (\{\mathit{is}\},\{\mathit{rs}\})
+              \\
+            % Test
+            \interp{ f=n }(\mathit{is}, \mathit{rs})
+              \triangleq\ &
+              (\mathsf{filter}\ (f=n)\ \{\mathit{is}\},\
+               \mathsf{filter}\ (f=n)\ \{\mathit{rs}\}) 
+              \\
+            % Sum
+            \interp{ a + b }(\mathit{is}, \mathit{rs})
+              \triangleq\ &
+              \interp { a }(\mathit{is}, \mathit{rs})\cup
+              \interp { b }(\mathit{is}, \mathit{rs}) \\
+              &\mathsf{where}\ (S_i^1, S_r^1)\cup (S_i^2, S_r^2)\triangleq
+                (S_i^1\cup S_i^2, S_r^1\cup S_r^2)\\
+            % Product
+            \interp { a \cdot b }(\mathit{is}, \mathit{rs})
+              \triangleq\ &
+              \interp { a }(\mathit{is}, \mathit{rs})\cap
+              \interp { b }(\mathit{is}, \mathit{rs}) \\
+              &\mathsf{where}\ (S_i^1, S_r^1)\cap (S_i^2, S_r^2)\triangleq
+                (S_i^1\cap S_i^2, S_r^1\cap S_r^2)\\
+            % Negation
+            \interp { \neg a }(\mathit{is}, \mathit{rs})
+              \triangleq\ &
+              \mathsf{let}\ (S_i, S_r) = \interp {a}(\mathit{is}, \mathit{rs}) \\
+              &\mathsf{in}\ (\{\mathit{is}\} - S_i, \{\mathit{rs}\} - S_r)
+              \\
+          \end{align*}
+          \caption{The semantics of predicates in \sysname.}
+          \label{fig:garuda:sem:pol}
+        \end{figure}
+
+      \subsubsection{Semantics of Policies}\label{sec:spec:sem:pol}
+        \begin{figure}
+          \centering
+          \begin{align*}  
+            % Injection Action
+            \interp { inj_{i}(i) }(\mathit{is}, \mathit{rs})
+              \triangleq\ &
+              (\{\mathit{i : is}\}, \{\mathit{rs}\}) 
+              % or ::?  ; is sequential
+              \\
+            % Injection Result
+            \interp { inj_{r}(r) }(\mathit{is}, \mathit{rs})
+              \triangleq\ &
+              (\{\mathit{is}\},\{ \mathit{r : rs}\})
+              \\
+            % Modification
+            \interp { f \leftarrow n }(is, rs)
+              \triangleq\ &
+              (\mathsf{map}\ (f\leftarrow n)\ \{is\},\
+               \mathsf{map}\ (f\leftarrow n)\ \{rs\})
+              \\ %  could use editing?
+            % Policy Union
+            \interp { p + q }(\mathit{is}, \mathit{rs})
+              \triangleq\ &
+              \interp { p }(\mathit{is}, \mathit{rs})\cup
+              \interp { q }(\mathit{is}, \mathit{rs}) \\
+              &\mathsf{where}\ (S_i^1, S_r^1)\cup (S_i^2, S_r^2)\triangleq
+                (S_i^1\cup S_i^2, S_r^1\cup S_r^2)\\
+              % A union of the streams gives a nondeterministic machine.
+            % Policy Concatnation
+            \interp { p \cdot q }(\mathit{is}, \mathit{rs})
+              \triangleq\ &
+              \mathsf{let}\ (S_i, S_r) = \interp{p}(is, rs)\\
+              &\mathsf{in}\ \bigcup \{\interp{q}(\mathit{is}',\mathit{rs}')\ |\ \mathit{is}'\in S_i, \mathit{rs'}\in S_r\}\\
+              \\
+            % Defn. of Filter
+            \interp{\mathsf{filter}\ f}(S)
+              \triangleq\ & \{l \in S\ |\ f(l) = \mathsf{true}\}\\
+            % Defn. of Map
+            \interp{\mathsf{map}\ g}(S)
+              \triangleq\ &
+              \{ g(l)\ |\ l\in S \} 
+          \end{align*}
+          \caption{The semantics of policies in \sysname.}
+          \label{fig:spec:sem:pol}
+        \end{figure}
   %}
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%% END OF SECTION 3 %%%
