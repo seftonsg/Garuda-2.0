@@ -327,8 +327,26 @@
     \subsection{Compiling \sysname to the Intermediate}\label{sec:compile:compile}
       We define a function $\mathbf{C}$ to be the compilation of some predicate or policy in \sysname to the intermediate language.
       $\mathbf{C}$ operates on the four ports of the \sysname monitor.
-      These consist of the inputs and outputs of each of the instruction and result streams.
-      Assume all $\mathbf{C}$ are short for $\mathbf{C}_{(i_{in},i_{out},r_{in},r_{out})}$ if unspecified.
+      These consist of the processing done after the Execution stage, before the Memory stage, and their respective altered streams.
+      Table~\ref{tab:compile:compile:ports} summarizes each port.
+      Assume all $\mathbf{C}$ are short for $\mathbf{C}_{(EXE,EXE',MEM,MEM')}$ if unspecified.
+      % Would it be best to flip MEM and MEM' to show the return to the original output of EXE?
+      \begin{table}
+        \centering
+        \begin{tabular}{c | l}
+          PORT   & DESCRIPTION \\ \hline
+          $EXE$  & Direct output of the execution stage. \\
+          $EXE'$ & Altered execution output. \\
+                 & Input for state register. \\
+          $MEM$  & Direct output of the state register. \\
+          $MEM'$ & Altered memory access input. 
+        \end{tabular}
+        \caption{
+          The four ports used in compilation.
+          These are the inputs and outputs for logic between the functional units and state register.
+        }
+        \label{tab:compile:compile:ports}
+      \end{table}
 
       \subsubsection{Compiling Predicates}\label{sec:compile:compile:pred}
         \begin{figure}
@@ -336,34 +354,37 @@
             %Falsity
             \mathbf{C}[0]\ 
               =\ &
-              let\ i\_bog = \text{new buf}\\
-              &\quad\ \ r\_bog = \text{new buf}\\
-              &in\ write(i_{out}, i\_bog)\\
-              &\quad  write(r_{out}, r\_bog)\\
+              let\ E\_bog = \text{new buf}\\
+              &\quad\ \ M\_bog = \text{new buf}\\
+              &in\ write(EXE', E\_bog)\\
+              &\quad  write(MEM', M\_bog)\\
             %Identity
             \mathbf{C}[1]\ 
               =\ &
-              write(i_{out}, read(i_{in}))\\
-              &write(r_{out}, read(r_{in}))
+              write(EXE', read(EXE))\\
+              &write(MEM', read(MEM))
               \\
             %Filter
             \mathbf{C}[f = n]\
               =\
-              &if\ i_{in}=n\ then\\
-              &\quad write(i_{out}, read(i_{in}))\\
-              &\quad else\ \mathbf{C}_{(i_{in}, i_{out}, -, -})[0]\\
-              &if\ r_{in}=n\ then\\
-              &\quad write(r_{out}, read(r_{in}))\\
-              &\quad else\ \mathbf{C}_{(-, -, r_{in}, r_{out}})[0]\\
+              &if\ EXE=n\ then\\
+              &\quad write(EXE', read(EXE))\\
+              &\quad else\ \mathbf{C}_{(EXE, EXE', -, -})[0]\\
+              &if\ MEM=n\ then\\
+              &\quad write(MEM', read(MEM))\\
+              &\quad else\ \mathbf{C}_{(-, -, MEM, MEM'})[0]\\
             %Predicate Addition
             \mathbf{C}[\mathsf{test}(a + b)]\ 
-              =\ &
-              let\ e_{aii}, e_{ari}, e_{bii}, e_{bri} = \text{new buf}\ in\\
-              & let\ e_{aio}, e_{aro}, e_{bio}, e_{bro} = \text{new buf}\ in\\
-                 &DeMux(i_{in}, e_{aii}, e_{bii})\ ||\ DeMux(r_{in}, e_{ari}, e_{bri})\\
-              &let\ e_a = \mathbf{C}_{(e_{aii},e_{aio},e_{ari},e_{aro})}[a]\\
-              &\quad\ \ e_b = \mathbf{C}_{(e_{bii},e_{bio},e_{bri},e_{bro})}[b]\\
-              &in\ Mux(e_a\ \ e_b, (i_{out},r_{out}))\\
+              =\
+              & (*Intermediate\ Execution\ Ports*)\\
+              & let\ E_{ai}, E'_{ai}, E_{bi}, E'_{bi} = \text{new buf}\ in\\
+              & (*Intermediate\ Memory\ Ports*)\\
+              & let\ M_{ai}, M'_{ai}, M_{bi}, M'_{bi} = \text{new buf}\ in\\
+              &\quad\ \ DeMux(EXE, E_{ai}, E_{bi})\ ||\\
+              &\quad\ \ DeMux(MEM, M_{ai}, M_{bi})\\
+              &let\     i_a = \mathbf{C}_{(E_{ai},E'_{ai},M_{ai},M'_{ai})}[a]\\
+              &\quad\ \ i_b = \mathbf{C}_{(E_{bi},E'_{bi},M_{bi},M'_{bi})}[b]\\
+              &in\ Mux(i_a\ \ i_b, (EXE',MEM'))\\
             %Predicate Product
             \mathbf{C}[\mathsf{test}(a \cdot b)]\ 
               =\ &\mathbf{C}[\mathsf{test}(a) \cdot \mathsf{test}(b)] \\
@@ -371,11 +392,14 @@
             \mathbf{C}[\neg a]\ 
               =\ 
               &if\ \neg a\ then\\
-              &\quad write(i_{out}, read(i_{in}))\\
-              &\quad write(r_{out}, read(r_{in}))\\
+              &\quad write(EXE', read(EXE))\\
+              &\quad write(MEM', read(MEM))\\
               &else\ \mathbf{C}[0]\\
           \end{align*}
-          \caption{Compilation of \sysname predicates into the intermediate language.}
+          \caption{
+            Compilation of \sysname predicates into the intermediate language.
+            These remain largely unchanged from \oldname.
+          }
           \label{fig:compile:compile:pred}
         \end{figure}
 
