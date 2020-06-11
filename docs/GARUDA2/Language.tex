@@ -96,8 +96,8 @@
     \subsection{Syntax}\label{sec:spec:synt}
       \subsubsection{Definitions}\label{sec:spec:synt:defn}
         % Definitions table
-        \begin{figure}
-          \centering
+        % \begin{figure}
+          {\centering
           \begin{tabular}{l l c l}
             EXE Input Fields & $f_{Ei}$  & $::=$ & $f_{Ei_{1}} \mid \dots \mid f_{Ei_{k}}$\\
             State Reg Fields & $f_{SR}$  & $::=$ & $f_{SR_{1}} \mid \dots \mid f_{SR_{k}}$\\
@@ -110,15 +110,15 @@
             % TODO: how do we define state in and state out? -- Who cares?  that's not part of the language
             % TODO: Mention that Inputs and Outputs can generically refer to either EXE or MEM.
             %       Indeed, the Outputs refers to both.
-          \end{tabular}
-          \caption{Definitions in \sysname.}
-          \label{fig:spec:synt:defn}
-        \end{figure}
+          \end{tabular}}
+          % \caption{Definitions in \sysname.}
+          % \label{fig:spec:synt:defn}
+        % \end{figure}
 
       \subsubsection{Syntax of Predicates}\label{sec:spec:synt:pred}
         % Predicates table
-        \begin{figure}
-          \centering
+        % \begin{figure}
+          {\centering
           \begin{tabular}{l c r l l}
             Predicates  & $a,b$ & $::=$  & $0$          & \textit{False}    \\
                         &       & $\mid$ & $1$          & \textit{Identity} \\
@@ -126,15 +126,15 @@
                         &       & $\mid$ & $a + b$      & \textit{Sum}      \\
                         &       & $\mid$ & $a \cdot b$  & \textit{Product}  \\
                         &       & $\mid$ & $\neg\ a$    & \textit{Negation}
-          \end{tabular}
-          \caption{Predicates in \sysname act as a boolean algebra.}
-          \label{fig:spec:synt:pred}
-        \end{figure}
+          \end{tabular}}
+          % \caption{Predicates in \sysname act as a boolean algebra.}
+          % \label{fig:spec:synt:pred}
+        % \end{figure}
 
-      \subsubsection{Syntax of Policies}\label{sec:spec:synt:pol}
+      % \subsubsection{Syntax of Policies}\label{sec:spec:synt:pol}
         % Policies table
-        \begin{figure}
-          \centering
+        % \begin{figure}
+          {\centering
           \begin{tabular}{l c r l l}
             Policies  & $p,q$ & $::=$  & $\mathbf{test}(a)$ & \textit{Test}      \\
                       &       & $\mid$ & $(\Phi_{Encrypt}, 
@@ -148,10 +148,10 @@
                       &       & $\mid$ & $f \leftarrow n$   & \textit{Update}   \\
                       &       & $\mid$ & $p + q$            & \textit{Choice}   \\
                       &       & $\mid$ & $p \cdot q$        & \textit{Sequential Concatenation} \\
-          \end{tabular}
-          \caption{Syntax of Policies in \sysname}
-          \label{fig:spec:synt:pol}
-        \end{figure}
+          \end{tabular}}
+          % \caption{Syntax of Policies in \sysname}
+          % \label{fig:spec:synt:pol}
+        % \end{figure}
   %%%%%%%%%%%%%%%%%%%%%%%
   %%% END SECTION 2.1 %%%
   %%% GARUDA SYNTAX   %%%
@@ -161,13 +161,13 @@
   %%% BEGIN SECTION 2.2 %%%
   %%% GARUDA SEMANTICS  %%%
   %%%%%%%%%%%%%%%%%%%%%%%%%
-    \clearpage
+    % \clearpage
     \subsection{Semantics}\label{sec:spec:sem}
       \subsubsection{Semantics of Predicates}\label{sec:spec:sem:pred}
     
         % Semantics of Predicates
-        \begin{figure}
-          \centering
+        % \begin{figure}
+          {\centering
           \begin{align*}
             % Theory
             \interp{ \cdot }\ 
@@ -211,14 +211,14 @@
               \mathsf{let}\ (S_e, S_m) = \interp {a}(es, ms) \\
               &\mathsf{in}\ (\{es\} - S_e, \{ms\} - S_m)
               \\
-          \end{align*}
-          \caption{The semantics of predicates in \sysname.  While predicates remain unchanged from \oldname, the theory changes slightly}
-          \label{fig:garuda:sem:pol}
-        \end{figure}
+          \end{align*}}
+          % \caption{The semantics of predicates in \sysname.  While predicates remain unchanged from \oldname, the theory changes slightly}
+          % \label{fig:garuda:sem:pol}
+        % \end{figure}
 
       \subsubsection{Semantics of Policies}\label{sec:spec:sem:pol}
-        \begin{figure}
-          \centering
+        % \begin{figure}
+          {\centering
           \begin{align*} 
             % Theory
             \interp { \cdot }\ 
@@ -274,10 +274,10 @@
             \interp{\mathsf{map}\ g}(S)
               \triangleq\ &
               \{ g(l)\ |\ l\in S \} 
-          \end{align*}
-          \caption{The semantics of policies in \sysname.}
-          \label{fig:spec:sem:pol}
-        \end{figure}
+          \end{align*}}
+          % \caption{The semantics of policies in \sysname.}
+          % \label{fig:spec:sem:pol}
+        % \end{figure}
   %%%%%%%%%%%%%%%%%%%%%%%%%
   %%% BEGIN SECTION 2.2 %%%
   %%% GARUDA SEMANTICS  %%%
@@ -292,12 +292,12 @@
 %%% BEGIN SECTION 4 %%%
 %%% COMPILATION     %%%
 %%%%%%%%%%%%%%%%%%%%%%%
-  \clearpage
+  % \clearpage
   \section{Compilation to Verilog}\label{sec:compile}
     \subsection{The Intermediate Language}\label{sec:compile:int}
 
-      \begin{figure}
-        \centering
+      % \begin{figure}
+        {\centering
         \begin{tabular}{l r r l l}
           % Definitions table
           Values        & $v$     & $::=$     & $\mathsf{INSTR\ |\ RES}$ &\\
@@ -322,35 +322,37 @@
                             & \textit{Concatenation}\\
                       &     & $\mid$ & $forever\ e$ 
                             & \textit{Hardwire}
-        \end{tabular}
-        \caption{The language \sysname uses as a means to facilitate compilation.}
-        \label{fig:compile:int}
-      \end{figure}
+        \end{tabular}}
+        % \caption{The language \sysname uses as a means to facilitate compilation.}
+        % \label{fig:compile:int}
+      % \end{figure}
     \subsection{Compiling \sysname to the Intermediate}\label{sec:compile:compile}
       We define a function $\mathbf{C}$ to be the compilation of some predicate or policy in \sysname to the intermediate language.
       $\mathbf{C}$ operates on the four ports of the \sysname monitor.
       These consist of the processing done after the Execution stage, before the Memory stage, and their respective altered streams.
       Table~\ref{tab:compile:compile:ports} summarizes each port.
-      Assume all $\mathbf{C}$ are short for $\mathbf{C}_{(EXE,\obf{EXE},\obf{MEM},MEM)}$ if unspecified.
+      Assume all $\mathbf{C}$ are short for $\mathbf{C}_{(EXE,\obf{EXE},\obf{MEM},MEM)}$ if unspecified.\\
+      \hfill\\
       % Would it be best to flip MEM and MEM' to show the return to the original output of EXE?
-      \begin{table}
-        \centering
+      % \begin{table}
+        {\centering
         \begin{tabular}{c | l}
           PORT        & DESCRIPTION \\ \hline
           $EXE$       & Direct output of the execution stage. \\
           $\obf{EXE}$ & Altered state register input. \\
           $\obf{MEM}$ & Direct output of the state register. \\
           $MEM$       & Altered memory access input. 
-        \end{tabular}
-        \caption{
-          The four ports used in compilation.
-          These are the inputs and outputs for logic between the functional units and state register.
-        }
-        \label{tab:compile:compile:ports}
-      \end{table}
+        \end{tabular}}
+        % \caption{
+        %   The four ports used in compilation.
+        %   These are the inputs and outputs for logic between the functional units and state register.
+        % }
+        % \label{tab:compile:compile:ports}
+      % \end{table}
 
       \subsubsection{Compiling Predicates}\label{sec:compile:compile:pred}
-        \begin{figure}
+        % \begin{figure}
+          {\centering
           \begin{align*}
             % Falsity
             \mathbf{C}[0]\ 
@@ -396,16 +398,17 @@
               &\quad write(\obf{EXE}, read(EXE))\\
               &\quad write(MEM, read(\obf{MEM}))\\
               &else\ \mathbf{C}[0]\\
-          \end{align*}
-          \caption{
-            Compilation of \sysname predicates into the intermediate language.
-            These remain largely unchanged from \oldname.
-          }
-          \label{fig:compile:compile:pred}
-        \end{figure}
+          \end{align*}}
+          % \caption{
+          %   Compilation of \sysname predicates into the intermediate language.
+          %   These remain largely unchanged from \oldname.
+          % }
+          % \label{fig:compile:compile:pred}
+        % \end{figure}
 
       \subsubsection{Compiling Policies}\label{sec:compile:compile:pol}
-        \begin{figure}
+        % \begin{figure}
+          {\centering
           \begin{align*}
             % Inject Instruction
             \mathbf{C}[inj_{SR}V]\ 
@@ -436,10 +439,10 @@
               &\quad\ \ e_p = \mathbf{C}_{( EXE, EXE_{mid}, \obf{MEM}, MEM_{mid}      )}[p]\\
               &\quad\ \ e_q = \mathbf{C}_{(      EXE_{mid}, \obf{EXE}, MEM_{mid}, MEM )}[q]\\
               &in\ e_p\ ;\ e_q
-          \end{align*}
-          \caption{Compilation of \sysname policies into the intermediate language.}
-          \label{fig:compile:compile:pol}
-        \end{figure}
+          \end{align*}}
+          % \caption{Compilation of \sysname policies into the intermediate language.}
+          % \label{fig:compile:compile:pol}
+        % \end{figure}
 %%%%%%%%%%%%%%%%%%%%%
 %%% END SECTION 4 %%%
 %%% COMPILATION   %%%
