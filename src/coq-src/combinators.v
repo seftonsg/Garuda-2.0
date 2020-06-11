@@ -413,6 +413,11 @@ Fixpoint compile_bufs (bufs : list string) (p : prog) : prog :=
    | x::bufs' => VDecl Local x (ofromz 0) (compile_bufs bufs' p)
    end.
  
+
+(* ********************)
+(*  Compilation Tests *)
+(*      (I think)     *)
+(* ********************)
 Section compile.
   Context (ity: ty) `{ScalarTy ity}.
   Context (oty: ty) `{ScalarTy oty}.  
@@ -475,6 +480,11 @@ Definition of_bin (l:list Z): Z := of_bin_aux 0 (rev l).
 
 Infix "`andpred`" := (BPred OAnd) (at level 60).
 
+
+(* ******************************)
+(*  Define MIPS Instruction Set *)
+(*         (incomplete)         *)
+(* ******************************)
 Section MIPS.
   Notation read x := (ofromz (of_bin x)%Z).
   
