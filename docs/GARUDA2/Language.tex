@@ -158,7 +158,6 @@
   %%%%%%%%%%%%%%%%%%%%%%%%%
   %%% BEGIN SECTION 2.2 %%%
   %%% GARUDA SEMANTICS  %%%
-
   %%%%%%%%%%%%%%%%%%%%%%%%%
     \clearpage
     \subsection{Semantics}\label{sec:spec:sem}
@@ -226,13 +225,13 @@
               & P(\mathbf{Stream}(Eo))\times P(\mathbf{Stream}(Mi)) 
               \\ 
             % Injection Action
-            \interp { inj_{i}(i) }(\mathit{os}, \mathit{is})
+            \interp { inj_{Eo}(o) }(\mathit{os}, \mathit{is})
               \triangleq\ &
               (\{\mathit{o : os}\}, \{\mathit{is}\}) 
               % or ::?  ; is sequential
               \\
             % Injection Result
-            \interp { inj_{r}(r) }(\mathit{os}, \mathit{is})
+            \interp { inj_{Mi}(i) }(\mathit{os}, \mathit{is})
               \triangleq\ &
               (\{\mathit{os}\},\{ \mathit{i : is}\})
               \\
