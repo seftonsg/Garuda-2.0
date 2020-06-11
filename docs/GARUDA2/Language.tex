@@ -98,11 +98,11 @@
         %Definitions table
         \begin{figure}
           \centering
-          \begin{tabular}{l r c l}
-            EXE Input Fields  & $f_{Ei}$  & $::=$ & $f_{Ei_{1}} \mid \dots \mid f_{Ei_{k}}$\\
-            EXE Output Fields & $f_{Eo}$  & $::=$ & $f_{Eo_{1}} \mid \dots \mid f_{Eo_{k}}$\\
-            MEM Input Fields  & $f_{Mi}$  & $::=$ & $f_{Mi_{1}} \mid \dots \mid f_{Mi_{k}}$\\
-            Fields            & $f$       & $::=$ & $f_{Ei} \mid f_{Eo} \mid f_{Mi} $ \\
+          \begin{tabular}{l l c l}
+            EXE Input Fields & $f_{Ei}$  & $::=$ & $f_{Ei_{1}} \mid \dots \mid f_{Ei_{k}}$\\
+            State Reg Fields & $f_{SR}$  & $::=$ & $f_{SR_{1}} \mid \dots \mid f_{SR_{k}}$\\
+            MEM Input Fields & $f_{Mi}$  & $::=$ & $f_{Mi_{1}} \mid \dots \mid f_{Mi_{k}}$\\
+            Fields           & $f$       & $::=$ & $f_{Ei} \mid f_{SR} \mid f_{Mi} $ \\
             Obfuscated Field & $\obf{f}$ & $::=$ & $f$\\
             Inputs           & $i$       & $::=$ & $\{f_{i_{1}} = v_{i_{1}} ,\ \dots\ ,\ f_{i_{k}} = v_{i_{k}}\}$\\
             Outputs          & $o$       & $::=$ & $\{f_{o_{1}} = v_{o_{1}} ,\ \dots\ ,\ f_{o_{k}} = v_{o_{k}}\}$\\
@@ -139,9 +139,11 @@
             Policies  & $p,q$ & $::=$  & $\mathbf{test}(a)$ & \textit{Test}      \\
                       &       & $\mid$ & $(\Phi_{Encrypt}, 
                                            \Phi_{Decrypt})$ & \textit{Obfuscation} \\
-                      &       & $\mid$ & $inj_{Eo}$         & \textit{Injection Execution Output} \\
+                      &       & $\mid$ & $inj_{SR}$         & \textit{Injection to State Register} \\
                       % alternatively: Injection to State Register (inj_{i})
-                      &       & $\mid$ & $inj_{Mi}$         & \textit{Injection Memory Input} \\
+                      %   should I make this Rs?  That could be confused with the rs in MIPS, 
+                      %   ... but we already used rs in GARUDA without problem
+                      &       & $\mid$ & $inj_{Mi}$         & \textit{Injection to Memory Unit} \\
                       % alternatively: Injection from State Register (inj_{o})
                       &       & $\mid$ & $f \leftarrow n$   & \textit{Update}   \\
                       &       & $\mid$ & $p + q$            & \textit{Choice}   \\
@@ -235,7 +237,7 @@
               (\{\mathit{\obf{e}}\}, \{\mathit{m}\})
               \\
             % Injection Action
-            \interp { inj_{Eo}(o) }(\mathit{os}, \mathit{is})
+            \interp { inj_{SR}(o) }(\mathit{es}, \mathit{ms})
               \triangleq\ &
               (\{\mathit{o : e}\}, \{\mathit{m}\}) 
               % or ::?  ;i sequential
@@ -407,11 +409,11 @@
         \begin{figure}
           \begin{align*}
             %Inject Instruction
-            \mathbf{C}[inj_iV]\ 
+            \mathbf{C}[inj_{SR}V]\ 
               =\ &
               write(i_{out}, V)\\
             %Inject Result
-            \mathbf{C}[inj_rV]\ 
+            \mathbf{C}[inj_{Mi}V]\ 
               =\ &
               write(r_{out}, V)\\
             %Assignment
