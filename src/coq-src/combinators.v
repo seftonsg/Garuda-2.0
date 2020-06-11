@@ -50,11 +50,16 @@ Fixpoint size (f : fld) : Int64.int :=
   | PC => Int64.repr 64                        
   end.
 
-Inductive pred {t:ty} : Type := 
-| BPred : binop -> pred -> pred -> pred
-| BZero : pred
-| BNeg : pred -> pred
-| BField : fld -> interp_ty t -> pred.
+Inductive pred {t:ty} : Type :=
+  (* Binary Operation of Two Predicates *)
+  (* Sum, Product *)
+  | BPred : binop -> pred -> pred -> pred
+  (* Falsity *)
+  | BZero : pred
+  (* Negation *)
+  | BNeg : pred -> pred
+  (* Test *) (* TODO: double check *)
+  | BField : fld -> interp_ty t -> pred.
 
 Arguments pred t : clear implicits.
 
@@ -63,16 +68,25 @@ Definition BFieldRange t (f:fld) (i:Int64.int) (v:interp_ty t) : pred t :=
   BField (OffsetFld i f) v.
 
 Inductive pol : ty -> ty -> Type :=
-| PTest : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pred ity -> pol ity oty -> pol ity oty 
-| PUpd : forall ity oty  `{ScalarTy ity} `{ScalarTy oty}, (exp ity -> exp oty) -> pol ity oty
-| PProj1 : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, pol (TProd ity1 ity2) ity1
-| PProj2 : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, pol (TProd ity1 ity2) ity2
-| PChoice : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pol ity oty -> pol ity oty -> pol ity oty
-| PConcat : forall ity mty oty  `{ScalarTy ity} `{ScalarTy mty} `{ScalarTy oty},
-    pol ity mty -> pol mty oty -> pol ity oty
-| PSkip : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pol ity oty
-| PFail : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pol ity oty
-| PId : forall ity `{ScalarTy ity}, pol ity ity.
+  (* Test *)
+  | PTest : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pred ity -> pol ity oty -> pol ity oty
+  (* Update *)
+  | PUpd : forall ity oty  `{ScalarTy ity} `{ScalarTy oty}, (exp ity -> exp oty) -> pol ity oty
+  (* TODO: nonfunctional, compiles to nothing *)
+  | PProj1 : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, pol (TProd ity1 ity2) ity1
+  (* TODO: nonfunctional, compiles to nothing *)
+  | PProj2 : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, pol (TProd ity1 ity2) ity2
+  (* Choice *)
+  | PChoice : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pol ity oty -> pol ity oty -> pol ity oty
+  (* Sequential Concatenation *)
+  | PConcat : forall ity mty oty  `{ScalarTy ity} `{ScalarTy mty} `{ScalarTy oty},
+      pol ity mty -> pol mty oty -> pol ity oty
+  (* Skip: compile nothing *)
+  | PSkip : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pol ity oty
+  (* Fail: assign a noop *)
+  | PFail : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pol ity oty
+  (* Identity *)
+  | PId : forall ity `{ScalarTy ity}, pol ity ity.
 
 Record Pol: Type :=
   mkPol {
@@ -83,11 +97,17 @@ Record Pol: Type :=
 
 Fixpoint pred_interp t `{ScalarTy t} (e : pred t) : interp_ty t -> Prop :=
   match e with 
+  (* Product *)
   | BPred OAnd e1 e2 => fun v => pred_interp e1 v /\ pred_interp e2 v
+  (* Sum *)
   | BPred OOr e1 e2 => fun v => pred_interp e1 v \/ pred_interp e2 v
+  (* catch other binops *)
   | BPred _ _ _ => fun _ => False (*other binops are nonboolean*)
+  (* Falsity *)
   | BZero => fun _ => False
+  (* Negation *)
   | BNeg e2 => fun v => not (pred_interp e2 v)
+  (* Test *) (* TODO: double check *)
   | BField f i => fun v =>
                     oiszero
                       (obinop OEq
@@ -107,19 +127,32 @@ Module PolInterp. Section pol_interp.
   Fixpoint pol_interp {ity oty} `{ScalarTy ity} `{ScalarTy oty}
            (p: pol ity oty) : interp_ty ity -> interp_ty oty -> Prop :=
     match p with
-    | PTest _ _ _ _ e p2 => fun v_in v_out => pred_interp e v_in /\ pol_interp p2 v_in v_out 
+    (* Test *)
+    | PTest _ _ _ _ e p2 => fun v_in v_out => pred_interp e v_in /\ pol_interp p2 v_in v_out
+    (* Update *)
     | PUpd _ _ _ _ f => fun v_in v_out => exp_interp s (f (EVal v_in)) = v_out
+    (* TODO: nonfunctional, compiles to nothing *)
     | PProj1 _ _ _ _ => fun v_in v_out => fst v_in = v_out
-    | PProj2 _ _ _ _ => fun v_in v_out => snd v_in = v_out                                                   
+    (* TODO: nonfunctional, compiles to nothing *)
+    | PProj2 _ _ _ _ => fun v_in v_out => snd v_in = v_out
+    (* Choice *)                                           
     | PChoice _ _ _ _ p1 p2 => fun v_in v_out => pol_interp p1 v_in v_out \/ pol_interp p2 v_in v_out
+    (* Sequential Concatenation *)
     | PConcat ity mty oty _ _ _ p1 p2 => fun v_in v_out =>
                              exists v_int:interp_ty mty,
                                pol_interp p1 v_in v_int /\ pol_interp p2 v_int v_out
+    (* Skip: compile nothing *)
     | PSkip _ _ _ _ => fun v_in v_out => True
+    (* Fail: assign a noop *)
     | PFail _ _ _ _ => fun v_in v_out => False
+    (* Identity *)
     | PId _ _ => fun v_in v_out => v_out = v_in
     end.
 End pol_interp. End PolInterp.
+
+(* *******************************)
+(*  Theorems of general policies *)
+(* *******************************)
 
 Section equations.
 Variable P: Pol.
@@ -219,12 +252,19 @@ Proof.
 Qed.
 End equations.
 
-(* Compile Predicates *)
+
+(* ****************************)
+(*  Compilation of Predicates *)
+(* ****************************)
 Fixpoint compile_pred t `{ScalarTy t} (x : id t) (p : pred t) : exp t :=
   match p with
+  (* Binop: Sum, Product *)
   | BPred op pl pr => EBinop op (compile_pred x pl) (compile_pred x pr)
+  (* Falsity *)
   | BZero => EVal (ofromz 0)
+  (* Negation *)
   | BNeg p' => ENot (compile_pred x p')
+  (* Test *)
   | BField f i => 
     let field_val :=
         EBinop
@@ -235,7 +275,10 @@ Fixpoint compile_pred t `{ScalarTy t} (x : id t) (p : pred t) : exp t :=
     in EBinop OEq field_val (EVal i)
   end.
 
-(* State monad *)
+
+(* ****************************)
+(* State Monad (for Policies) *)
+(* ****************************)
 Section M.
   Variable state : Type.
 
@@ -251,6 +294,7 @@ Section M.
 End M.
 
 (* Variables using decimal integers *)
+(* Used to name intermediary registers, wires, etc. *)
 Inductive digit : Type :=
   Zero | One | Two | Three | Four | Five | Six | Seven | Eight | Nine.
 
@@ -298,37 +342,44 @@ Fixpoint nat2decimal_aux (fuel n : nat) (acc : decimal) : decimal :=
       end
   end.
  
- Definition nat2decimal (n : nat) : decimal :=
-   nat2decimal_aux n n nil.
+Definition nat2decimal (n : nat) : decimal :=
+  nat2decimal_aux n n nil.
  
- Definition nat2string (n : nat) : string := decimal2string (nat2decimal n).
+Definition nat2string (n : nat) : string := decimal2string (nat2decimal n).
 
- Definition state := (nat * list string)%type.
+Definition state := (nat * list string)%type.
  
- Definition new_buf : M state string :=
-   fun p =>
-     match p with
-     | (n, l) =>
-       let new_buf := append "internal" (nat2string n) in 
-       ((S n, new_buf::l), new_buf)
-     end.       
+Definition new_buf : M state string :=
+  fun p =>
+    match p with
+    | (n, l) =>
+      let new_buf := append "internal" (nat2string n) in 
+      ((S n, new_buf::l), new_buf)
+    end.       
  
- (* Compile Policies *)
- Fixpoint compile_pol
+(* **************************)
+(*  Compilation of Policies *)
+(* **************************)
+Fixpoint compile_pol
           t1 t2
           `{ScalarTy t1} `{ScalarTy t2}
           (i:id t1) (o:id t2) (p : pol t1 t2) : M state stmt :=
   match p in pol t1 t2 with
+  (* Test *)
   | PTest t1 t2 _ _ test p_cont =>
     let e_test := @compile_pred t1 _ i test
     in bind (@compile_pol t1 t2 _ _ i o p_cont) (fun s_cont =>
        ret (SITE e_test s_cont SSkip))
 
+  (* Update *)
   | PUpd t1 t2 _ _ f => ret (@SAssign t2 _ o (f (@EVar t1 i)))
 
-  | PProj1 t1 t2 _ _ => ret SSkip (*FIXME*)
-  | PProj2 t1 t2 _ _ => ret SSkip (*FIXME*)                                                        
+  (* TODO: nonfunctional, compiles to nothing *)
+  | PProj1 t1 t2 _ _ => ret SSkip (* FIXME *)
+  (* TODO: nonfunctional, compiles to nothing *)
+  | PProj2 t1 t2 _ _ => ret SSkip (* FIXME *)                                                        
 
+  (* Choice *)
   | PChoice t1 t2 _ _ p1 p2 =>
     bind new_buf (fun o_new1 =>
     bind new_buf (fun o_new2 =>                     
@@ -339,25 +390,34 @@ Fixpoint nat2decimal_aux (fuel n : nat) (acc : decimal) : decimal :=
         (SAssign o
           (EBinop OOr (EVar o_new1) (EVar o_new2)))))))))
 
+  (* Sequential Concatenation *)
   | PConcat t1 t2 t3 _ _ _ p1 p2 =>
     bind new_buf (fun m_new_buf =>
     bind (@compile_pol t1 t2 _ _ i m_new_buf p1) (fun s1 =>
     bind (@compile_pol t2 t3 _ _ m_new_buf o p2) (fun s2 => 
     ret (SSeq s1 s2))))
 
+  (* Skip: compile nothing *)
   | PSkip _ _ _ _ => ret SSkip
 
+  (* Fail: assign a noop *)
   | PFail _ _ _ _ => ret (SAssign o (EVal (ofromz 0)))
 
+  (* Identity *)
   | PId _ _ => ret (@SAssign t1 _ o (EVar i))
   end.
 
- Fixpoint compile_bufs (bufs : list string) (p : prog) : prog :=
+Fixpoint compile_bufs (bufs : list string) (p : prog) : prog :=
    match bufs with
    | nil => p
    | x::bufs' => VDecl Local x (ofromz 0) (compile_bufs bufs' p)
    end.
  
+
+(* ********************)
+(*  Compilation Tests *)
+(*      (I think)     *)
+(* ********************)
 Section compile.
   Context (ity: ty) `{ScalarTy ity}.
   Context (oty: ty) `{ScalarTy oty}.  
@@ -420,6 +480,11 @@ Definition of_bin (l:list Z): Z := of_bin_aux 0 (rev l).
 
 Infix "`andpred`" := (BPred OAnd) (at level 60).
 
+
+(* ******************************)
+(*  Define MIPS Instruction Set *)
+(*         (incomplete)         *)
+(* ******************************)
 Section MIPS.
   Notation read x := (ofromz (of_bin x)%Z).
   
@@ -531,6 +596,10 @@ Require Import syntax.
 Notation "'`IF`' e '`THEN`' p1 '`ELSE`' p2" :=
   (PChoice (PTest e p1) (PTest (BNeg e) p2)) (at level 101).
 
+
+(* ************************)
+(*  SecJmp Example Policy *)
+(* ************************)
 Section test_secjmp.
   Variables i o : id TVec64.
   (*High-order 10 bits of immediate address are zeroed. Because the effective 
@@ -544,6 +613,9 @@ Section test_secjmp.
     `IF` jump `THEN` PTest sec_addr PId `ELSE` PId.
 End test_secjmp.
 
+(* *************************************)
+(*  Secure Control Flow Example Policy *)
+(* *************************************)
 Section scf.
   (*A control-flow isolation policy. We assume that the effective address
     is pre-calculated in the top 32 bits of the input vector. *)
@@ -558,6 +630,9 @@ Section scf.
     `IF` jump_indirect `THEN` PTest (BNeg sec_addr32) PId `ELSE` PId.    
 End scf.
 
+(* ****************************************)
+(*  Secure Failt Isolation Example Policy *)
+(* ****************************************)
 Section sfi.
   (*A write isolation policy, which we called SFI in the original paper. Note that 
     SFI sometimes refers to a combination of write isolation and control-flow isolation 
@@ -575,6 +650,9 @@ Section sfi.
     `IF` store `THEN` PConcat (PUpd mask) (PUpd force_range) `ELSE` PId.
 End sfi.
 
+(* ******************************)
+(*  Simple Taint Example Policy *)
+(* ******************************)
 Section taint.
   (*Taint tracking through ALU operations only (the monitors could be extended to 
     support other taint propagation rules).*)
@@ -615,18 +693,22 @@ Section taint.
             end).
 End taint.
 
-(*Section thesis_example.
-  Definition KernelPC := BFieldRange (ofromz 8191 (*0x0FFF*)
-*)
+(* *********************)
+(*  Print the Programs *)
+(* *********************)
 Require Import extraction.
 
-(* print the program *)
-
+(* ****************)
+(*  Define Fields *)
+(* ****************)
 Definition i : id TVec64 := "i".
 Definition o : id TVec64 := "o".
 Definition ri : id TVec64 := "ri".
 Definition ro : id TVec64 := "ro".
 
+(* ***********************)
+(*  Define Pols Compiled *)
+(* ********** *************)
 Definition sec_jmp_compiled : prog := compile i o sec_jmp.
 Definition SFI_compiled : prog := compile ri ro sfi.
 
@@ -640,6 +722,9 @@ Definition taint_compiled : prog := compile taint_i taint_o taint.
 
 Definition scf_compiled : prog := compile i o scf.
 
+(* ****************************)
+(*  Define HS Print Functions *)
+(* ****************************)
 Definition pretty_print_sec_jmp :=
   pretty_print_tb "secjmp" sec_jmp_compiled.
 Definition pretty_print_SFI :=
@@ -649,7 +734,13 @@ Definition pretty_print_taint :=
 Definition pretty_print_SCF := 
   pretty_print_tb "SCF" scf_compiled.
 
-(* run the program 'secjmp.hs' and pipe to a file to get verilog *)
+(* ************************)
+(*  Extraction to Haskell *)
+(* ************************)
+(* run the program 'secjmp.hs' and pipe to a file to get verilog       *)
+(* Ignore warnings on opacity, see the end of the section on realizing *)
+(* axioms for a proper explanation on why this is safe to do so:       *)
+(* https://coq.inria.fr/refman/addendum/extraction.html?highlight=extraction%20warning#realizing-axioms *)
 Extract Constant main => "Prelude.putStrLn pretty_print_sec_jmp".
 Extraction "secjmp.hs" pretty_print_sec_jmp main.
 Extract Constant main => "Prelude.putStrLn pretty_print_SFI".

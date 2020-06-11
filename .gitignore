@@ -15,4 +15,4 @@ A-*
 #coq_makefile Coqlib.v Extractions.v hdl.v hmac.v Integers.v interaction.v lang.v sha256.v syntax.v
 
 #Random stuff
-*.pdf
+#*.pdf

@@ -1,0 +1,544 @@
+% Sage Sefton
+% G2
+% Abstract Due Apr 3
+
+
+%Preamble%
+  \documentclass[12pt, letterpaper]{article}
+  \usepackage{pdfpages} %for including PDFs. see Graphicx for more info
+  \usepackage{amsmath} %for \mvert and other relation symbol
+  \usepackage{amssymb} %for semantic delta=
+  \usepackage{amsthm} %for \begin{proof} and related sections
+  \usepackage{stmaryrd} %for semantics [[ and ]]
+  \usepackage{dsfont} %for fancy set letters
+  \usepackage{fancyhdr} %fancy headers
+  \usepackage{color} %for things that need attention
+  \usepackage[numbers]{natbib}
+  \usepackage{xspace}
+  %\usepackage{array} %Include if {tabular}{>{$}c<{$}} type arrays are required
+  \let\emptyset\varnothing
+  \pagestyle{fancy}
+  \lhead{Sage Sefton}
+  \rhead{Page \thepage}
+
+%Custom Commands%
+  \newcommand\interp[1]{\llbracket #1 \rrbracket}
+  \def \sysname {\textsc{GARUDA 2.0}\xspace}
+  \def \oldname {\textsc{GARUDA}\xspace}
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+%%% BEGIN TITLE PAGE %%%
+%%%%%%%%%%%%%%%%%%%%%%%%
+  \title{\sysname}
+  \date{2020\\ Spring}
+
+  \author{
+    Sage Sefton \\
+    ss557415@ohio.edu \\
+    Ohio University \\
+    \and
+    Avinash Karanth  \\
+    karanth@ohio.edu \\
+    Ohio University  \\
+  %  \and
+  %  Gordon Stewart \\
+  %  gstewart@ohio.edu \\
+  %  Ohio University
+  }
+
+  \maketitle
+  \cleardoublepage
+%%%%%%%%%%%%%%%%%%%%%%
+%%% END TITLE PAGE %%%
+%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%
+%%% BEGIN SECTION 1 %%%
+%%% BACKGROUND      %%%
+%%%%%%%%%%%%%%%%%%%%%%%
+  \section{Background}\label{sec:bkgnd}
+
+    \oldname was a system that operated on a two stream model of the "user" or program, and that which executed the instructions.
+    \sysname, we extend, or refine based on the point of view, this model to operate between the Execution (EXE) and Memory (MEM) stages of the pipeline.
+    We assume a monitor theory shown by the graphic Fig~\ref{fig:bkgnd:newmodel}.
+    The monitor appears to operate on a single stream, but the two hanging connections can be considered the two streams of the former model.
+
+    The most obvious change we need to make is to enable encryption and decryption of the EffAddr.
+    Our attack vector focuses on a trojan targeting the state register between the EXE and MEM stages.
+    They could cache these addresses and try to access that memory later, or they may try to use them as a side channel.
+    Either way, allowing an adversary to track our memory accesses is clearly problematic.
+    However, when we refer to "encryption", we really mean some reversible obfuscation function.
+    We employ the proof assistant, Coq, to prove the EN and DE blocks are exact inverses.
+    \oldname is written in Coq for exactly this reason, so requiring a proof that $\forall P, DE (EN P) = P$ should be sufficient.
+    % TODO: Check this proof format, it may be wrong
+
+
+
+%%%%%%%%%%%%%%%%%%%%%
+%%% END SECTION 1 %%%
+%%% BACKGROUND    %%%
+%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+%%% BEGIN SECTION 2  %%%
+%%% GARUDA SPECIFICS %%%
+%%%%%%%%%%%%%%%%%%%%%%%%
+  \section{The Implementation of \sysname}\label{sec:spec}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%
+  %%% BEGIN SECTION 2.1 %%%
+  %%% GARUDA SYNTAX     %%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%
+    \subsection{Syntax}\label{sec:spec:synt}
+      \subsubsection{Definitions}\label{sec:spec:synt:defn}
+        %Definitions table
+        \begin{figure}
+          \centering
+          \begin{tabular}{l r c l}
+            EXE Input Fields  & $f_{Ei}$  & $::=$ & $f_{Ei_{1}} \mid \dots \mid f_{Ei_{k}}$\\
+            EXE Output Fields & $f_{Eo}$  & $::=$ & $f_{Eo_{1}} \mid \dots \mid f_{Eo_{k}}$\\
+            MEM Input Fields  & $f_{Mi}$  & $::=$ & $f_{Mi_{1}} \mid \dots \mid f_{Mi_{k}}$\\
+            Fields            & $f$       & $::=$ & $f_{Ei} \mid f_{Eo} \mid f_{Mi} $ \\
+            Instructions      & $i$       & $::=$ & $\{f_{i_{1}} = v_{i_{1}} ,\ \dots\ ,\ f_{i_{k}} = v_{i_{k}}\}$\\
+            Outputs           & $o$       & $::=$ & $\{f_{o_{1}} = v_{o_{1}} ,\ \dots\ ,\ f_{o_{k}} = v_{o_{k}}\}$\\
+            Obfuscation Fxn   & $\lambda$ & $::=$ & $f \rightarrow f'$
+            % Obfuscation Fxn   & $\mathbf{F}$  & $::=$ & $f \rightarrow f'$
+            % TODO: There's got to be something clearer than F, maybe capital gamma, lambda?
+            % TODO: how do we define state in and state out?i
+          \end{tabular}
+          \caption{Definitions in \sysname.}
+          \label{fig:spec:synt:defn}
+        \end{figure}
+
+      \subsubsection{Syntax of Predicates}\label{sec:spec:synt:pred}
+        %Predicates table
+        \begin{figure}
+          \centering
+          \begin{tabular}{l c r l l}
+            Predicates  & $a,b$ & $::=$  & $0$          & \textit{False}    \\
+                        &       & $\mid$ & $1$          & \textit{Identity} \\
+                        &       & $\mid$ & $f = n$      & \textit{Test}     \\
+                        &       & $\mid$ & $a + b$      & \textit{Sum}      \\
+                        &       & $\mid$ & $a \cdot b$  & \textit{Product}  \\
+                        &       & $\mid$ & $\neg\ a$    & \textit{Negation}
+          \end{tabular}
+          \caption{Predicates in \sysname act as a boolean algebra.}
+          \label{fig:spec:synt:pred}
+        \end{figure}
+
+      \subsubsection{Syntax of Policies}\label{sec:spec:synt:pol}
+        %Policies table
+        \begin{figure}
+          \centering
+          \begin{tabular}{l c r l l}
+            Policies  & $p,q$ & $::=$  & $\mathbf{test}(a)$    & \textit{Test}     \\
+                      &       & $\mid$ & $(\lambda_{Encrypt}, 
+                                           \lambda_{Decrypt})$ & \textit{Obfuscate} \\
+                      &       & $\mid$ & $inj_{Eo}$            & \textit{Injection Execution Output} \\
+                      % alternatively: Injection to State Register (inj_{i})
+                      &       & $\mid$ & $inj_{Mi}$            & \textit{Injection Memory Input} \\
+                      % alternatively: Injection from State Register (inj_{o})
+                      &       & $\mid$ & $f \leftarrow n$      & \textit{Update}   \\
+                      &       & $\mid$ & $p + q$               & \textit{Choice}   \\
+                      &       & $\mid$ & $p \cdot q$           & \textit{Sequential Concatenation} \\
+          \end{tabular}
+          \caption{Syntax of Policies in \sysname}
+          \label{fig:spec:synt:pol}
+        \end{figure}
+  %%%%%%%%%%%%%%%%%%%%%%%
+  %%% END SECTION 2.1 %%%
+  %%% GARUDA SYNTAX   %%%
+  %%%%%%%%%%%%%%%%%%%%%%%
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%
+  %%% BEGIN SECTION 2.2 %%%
+  %%% GARUDA SEMANTICS  %%%
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%
+    \clearpage
+    \subsection{Semantics}\label{sec:spec:sem}
+      \subsubsection{Semantics of Predicates}\label{sec:spec:sem:pred}
+    
+        %Semantics of Predicates
+        \begin{figure}
+          \centering
+          \begin{align*}
+            % Theory
+            \interp{ \cdot }\ 
+              :\ \ &
+              \mathbf{Stream}(I)\times \mathbf{Stream}(R) \rightarrow \\
+              & P(\mathbf{Stream}(I))\times P(\mathbf{Stream}(R)) 
+              \\
+            % Falsity
+            \interp{ 0 }(-, -)
+              \triangleq\ &
+              (\emptyset , \emptyset)
+              \\ % or null-stream?
+            % Identity
+            \interp{ 1 }(\mathit{is}, \mathit{rs})
+              \triangleq\ &
+              (\{\mathit{is}\},\{\mathit{rs}\})
+              \\
+            % Test
+            \interp{ f=n }(\mathit{is}, \mathit{rs})
+              \triangleq\ &
+              (\mathsf{filter}\ (f=n)\ \{\mathit{is}\},\
+               \mathsf{filter}\ (f=n)\ \{\mathit{rs}\}) 
+              \\
+            % Sum
+            \interp{ a + b }(\mathit{is}, \mathit{rs})
+              \triangleq\ &
+              \interp { a }(\mathit{is}, \mathit{rs})\cup
+              \interp { b }(\mathit{is}, \mathit{rs}) \\
+              &\mathsf{where}\ (S_i^1, S_r^1)\cup (S_i^2, S_r^2)\triangleq
+                (S_i^1\cup S_i^2, S_r^1\cup S_r^2)\\
+            % Product
+            \interp { a \cdot b }(\mathit{is}, \mathit{rs})
+              \triangleq\ &
+              \interp { a }(\mathit{is}, \mathit{rs})\cap
+              \interp { b }(\mathit{is}, \mathit{rs}) \\
+              &\mathsf{where}\ (S_i^1, S_r^1)\cap (S_i^2, S_r^2)\triangleq
+                (S_i^1\cap S_i^2, S_r^1\cap S_r^2)\\
+            % Negation
+            \interp { \neg a }(\mathit{is}, \mathit{rs})
+              \triangleq\ &
+              \mathsf{let}\ (S_i, S_r) = \interp {a}(\mathit{is}, \mathit{rs}) \\
+              &\mathsf{in}\ (\{\mathit{is}\} - S_i, \{\mathit{rs}\} - S_r)
+              \\
+          \end{align*}
+          \caption{The semantics of predicates in \sysname.}
+          \label{fig:garuda:sem:pol}
+        \end{figure}
+
+      \subsubsection{Semantics of Policies}\label{sec:spec:sem:pol}
+        \begin{figure}
+          \centering
+          \begin{align*}  
+            % Injection Action
+            \interp { inj_{i}(i) }(\mathit{is}, \mathit{rs})
+              \triangleq\ &
+              (\{\mathit{i : is}\}, \{\mathit{rs}\}) 
+              % or ::?  ; is sequential
+              \\
+            % Injection Result
+            \interp { inj_{r}(r) }(\mathit{is}, \mathit{rs})
+              \triangleq\ &
+              (\{\mathit{is}\},\{ \mathit{r : rs}\})
+              \\
+            % Modification
+            \interp { f \leftarrow n }(is, rs)
+              \triangleq\ &
+              (\mathsf{map}\ (f\leftarrow n)\ \{is\},\
+               \mathsf{map}\ (f\leftarrow n)\ \{rs\})
+              \\ %  could use editing?
+            % Policy Union
+            \interp { p + q }(\mathit{is}, \mathit{rs})
+              \triangleq\ &
+              \interp { p }(\mathit{is}, \mathit{rs})\cup
+              \interp { q }(\mathit{is}, \mathit{rs}) \\
+              &\mathsf{where}\ (S_i^1, S_r^1)\cup (S_i^2, S_r^2)\triangleq
+                (S_i^1\cup S_i^2, S_r^1\cup S_r^2)\\
+              % A union of the streams gives a nondeterministic machine.
+            % Policy Concatnation
+            \interp { p \cdot q }(\mathit{is}, \mathit{rs})
+              \triangleq\ &
+              \mathsf{let}\ (S_i, S_r) = \interp{p}(is, rs)\\
+              &\mathsf{in}\ \bigcup \{\interp{q}(\mathit{is}',\mathit{rs}')\ |\ \mathit{is}'\in S_i, \mathit{rs'}\in S_r\}\\
+              \\
+            % Defn. of Filter
+            \interp{\mathsf{filter}\ f}(S)
+              \triangleq\ & \{l \in S\ |\ f(l) = \mathsf{true}\}\\
+            % Defn. of Map
+            \interp{\mathsf{map}\ g}(S)
+              \triangleq\ &
+              \{ g(l)\ |\ l\in S \} 
+          \end{align*}
+          \caption{The semantics of policies in \sysname.}
+          \label{fig:spec:sem:pol}
+        \end{figure}
+  %}
+%%%%%%%%%%%%%%%%%%%%%%%%
+%%% END OF SECTION 3 %%%
+%%% GARUDA SEMANTICS %%%
+%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% BEGIN SECTION 4     %%%
+%%% INTERMEDIATE SYNTAX %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \cleardoublepage
+  \section{Intermediate Syntax}\label{sec:isyn}
+
+    \begin{tabular}{l r r l l}
+      %Definitions table
+      Values        & $v$     & $::=$     & $\mathsf{INSTR\ |\ RES}$ &\\
+      Registers     & $b$     & $::=$     & $\mathsf{reg}$           &\\
+      \\
+      %Predicates table
+      Expressions & $e$ & $::=$  & $read(b)$       
+                        & \textit{Read Reg}\\
+                  &     & $\mid$ & $write(b,v)$    
+                        & \textit{Write Value to Reg}\\
+                  &     & $\mid$ & $let\ x = e_1\ in\ e_2$ 
+                        & \textit{Assignment}\\  
+                  &     & $\mid$ & $e_1\ ||\ e_2$ 
+                        & \textit{Parallel}\\
+                  &     & $\mid$ & $f(e_1)$        
+                        & \textit{Apply Function} \\  
+                  &     & $\mid$ & $if\ v = n\ then\ e_1\ else\ e_2$
+                        & \textit{Conditional} \\
+                  &     & $\mid$ & $e_1\ \&\&\ e_2$ 
+                        & \textit{Product (AND)}\\
+                  &     & $\mid$ & $e_1 ; e_2$
+                        & \textit{Concatination}\\
+                  &     & $\mid$ & $forever\ e$ 
+                        & \textit{Hardwire}
+    \end{tabular}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% END OF SECTION 4    %%%
+%%% INTERMEDIATE SYNTAX %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% BEGIN SECTION 5   %%%
+%%% INTERMEDIATE COMP %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+  \clearpage
+  \section{Intermediate Semantics}\label{sec:icomp}
+    
+    Assume all $\mathbf{C}$ is short for $\mathbf{C}_{(i_{in},i_{out},r_{in},r_{out})}$ if unspecified.
+    {\fontsize{12pt}{14pt}\selectfont
+    %Semantics align
+    %\begin{align*}
+    %    DeMux(iin, b1, b2)\
+    %        =\ &
+    %        let\ x=read(iin)\\
+    %        & in (write(b1, x);write(b2, x))\\
+    %        &in\ e_a\ ||\ e_b\\
+    %\end{align*}
+    \begin{align*}
+      %Falsity
+      \mathbf{C}[0]\ 
+        =\ &
+        let\ i\_bog = \text{new buf}\\
+        &\quad\ \ r\_bog = \text{new buf}\\
+        &in\ write(i_{out}, i\_bog)\\
+        &\quad  write(r_{out}, r\_bog)\\
+      %Identity
+      \mathbf{C}[1]\ 
+        =\ &
+        write(i_{out}, read(i_{in}))\\
+        &write(r_{out}, read(r_{in}))
+        \\
+      %Filter
+      \mathbf{C}[f = n]\
+         =\
+         &if\ i_{in}=n\ then\\
+         &\quad write(i_{out}, read(i_{in}))\\
+         &\quad else\ \mathbf{C}_{(i_{in}, i_{out}, -, -})[0]\\
+         &if\ r_{in}=n\ then\\
+         &\quad write(r_{out}, read(r_{in}))\\
+         &\quad else\ \mathbf{C}_{(-, -, r_{in}, r_{out}})[0]\\
+    \end{align*}
+    \begin{align*}
+       %Predicate Addition
+      \mathbf{C}[\mathsf{test}(a + b)]\ 
+        =\ &
+        let\ e_{aii}, e_{ari}, e_{bii}, e_{bri} = \text{new buf}\ in\\
+           &DeMux(i_{in}, e_{aii}, e_{bii})\ ||\ DeMux(r_{in}, e_{ari}, e_{bri})\\
+        &let\ e_a = \mathbf{C}_{(e_{aii},e_{aio},e_{ari},e_{aro})}[a]\\
+        &\quad\ \ e_b = \mathbf{C}_{(e_{bii},e_{bio},e_{bri},e_{bro})}[b]\\
+        &in\ Mux(e_a\ \ e_b, (i_{out},r_{out}))\\
+      %Predicate Product
+      \mathbf{C}[\mathsf{test}(a \cdot b)]\ 
+         =\ &\mathbf{C}[\mathsf{test}(a) \cdot \mathsf{test}(b)] \\
+      %Predicate Negation
+      \mathbf{C}[\neg a]\ 
+         =\ 
+         &if\ \neg a\ then\\
+         &\quad write(i_{out}, read(i_{in}))\\
+         &\quad write(r_{out}, read(r_{in}))\\
+         &else\ \mathbf{C}[0]\\
+      %Slice to Action
+      \mathbf{C}[act(p)]\ 
+        =\ &
+        let\ r\_bog_i = \text{new buf}\\
+        &\quad\ \ r\_bog_o = \text{new buf}\\
+        &in\ e_p = \mathbf{C}_{(i_{in}, i_{out}, r\_bog_i, r\_bog_o)}[p]\\
+        &e_p\ ||\ write(r_{out}, read(r_{in}))
+        %or
+        % let r = read(r_in)
+        % in write(r_out, r)
+        \\
+      %Slice to Result
+      \mathbf{C}[res(p)]\ 
+        =\ &
+        let\ i\_bog_i = \text{new buf}\\
+        &\quad\ \ i\_bog_o = \text{new buf}\\
+        &in\ e_p = \mathbf{C}_{(i\_bog_i, i\_bog_o, r_{in}, r_{out})}[p]\\
+        &e_p\ ||\ write(i_{out}, read(i_{in}))
+        \\
+      %Inject Instruction
+      \mathbf{C}[inj_iV]\ 
+        =\ &
+        write(i_{out}, V)
+        \\
+      %Inject Result
+      \mathbf{C}[inj_rV]\ 
+        =\ &
+        write(r_{out}, V)
+        \\
+      %Assignment
+      \mathbf{C}[f \leftarrow n]\ 
+        =\ &
+        let\ i' = f(read(i_{in}))\\
+        &\quad\ \ r' = f(read(r_{in}))\\
+        &in\ write(i_{out}, i')\\
+        &\quad \ write(r_{out}, r')
+        \\
+      %Policy Nondeterministic Choice
+      \mathbf{C}[p + q]\ 
+        =\ &
+        let\ e_p = \mathbf{C}[p]\\
+        &\quad\ \ e_q = \mathbf{C}[q]\\
+        &in\ Mux(e_p, e_q, (i_{out},r_{out}))
+        \\
+      %Policy Sequence
+      \mathbf{C}[p \cdot q]\ 
+        =\ &
+        let\ i_{mid} = \text{new buf}\\
+        &\quad\ \ r_{mid} = \text{new buf}\\
+        &\quad\ \ e_p = \mathbf{C}_{(i_{in}, i_{mid}, r_{in}, r_{mid})}[p]\\
+        &\quad\ \ e_q = \mathbf{C}_{(i_{mid}, i_{out}, r_{mid}, r_{out})}[q]\\
+        &in\ e_p\ ;\ e_q
+      %Define filter
+      %Define map
+    \end{align*}
+    }
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% END OF SECTION 5  %%%
+%%% INTERMEDIATE COMP %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%
+%%% BEGIN SECTION 5 %%%
+%%% APPLICATIONS    %%%
+%%%%%%%%%%%%%%%%%%%%%%%
+  \clearpage
+  \section{Applications of \sysname}
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%% BEGIN SUBSECTION 5.1 %%%
+    %%% STANDARD TAINT       %%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \subsection{Standard Taint}
+    
+
+      In the previous version of \oldname, taint was implemented by tagging the most significant bit of a register. 
+      This caused no hardware overhead to maintain in the pipeline, but imposed an obvious bit-resolution hindrance.
+      In \sysname, the definition of such a policy is identical, but the compilation is different.
+
+      We assume a MIPS-like architecture for this example.
+      The op codes of any given instruction are no more than 3; $\mathsf{IN_1}$, $\mathsf{IN_2}$, and $\mathsf{OUT}$
+      We denote these as $\mathsf{RS}$, $\mathsf{RT}$, and $\mathsf{RD}$.
+
+      Let's suppose you want your taint to propogate on the inputs of any arithmetic instructions.
+      Additionally, you prohibit any tainted instructions or addresses from accessing memory.
+      In \sysname, we can define this as follows.
+      Please note that $\mathsf{ALU}$ can further be expanded to specific types of ALU instructions
+
+      \[
+      \begin{array}{r c l}
+        %Define inputs
+        \mathit{Instruction\ Fields}\ f_i &::=& \mathsf{Taint_{RS}}, \mathsf{Taint_{RT}}, \mathsf{Taint_{RD}}, \mathsf{OP}\\
+        \mathsf{OP} &::=& \mathsf{MEM_{READ}}\ |\ \mathsf{MEM_{WRITE}}\ |\ \mathsf{ALU} |\ \cdots \\
+        \mathit{Result\ Fields}\ f_r &::=& \mathsf{(*empty*)}\\\\
+
+        %Op Types
+        \mathsf{Arith}   &\triangleq& \mathsf{OP} = \mathsf{ALU}\\
+        \mathsf{Read}    &\triangleq& \mathsf{OP} = \mathsf{MEM_{READ}}\\
+        \mathsf{Write}   &\triangleq& \mathsf{OP} = \mathsf{MEM_{WRITE}}\\
+        \mathsf{AnyMem}  &\triangleq& \mathsf{Read} + \mathsf{Write}\\\\
+
+        %Sub Rules
+        \mathsf{TaintedInstr} &\triangleq& ( \mathsf{Taint_{RS}} = \mathsf{TRUE} ) + ( \mathsf{Taint_{RT}} = \mathsf{TRUE} )\\
+        \mathsf{TaintRes}     &\triangleq& \mathsf{Taint_{RD}} \leftarrow \mathsf{TRUE}\\\\
+
+        %Rule
+        \mathsf{PropTaintALU} &\triangleq&
+          %% Formerly injected TaintRes, but update (\leftarrow) is a policy of its own that operates on fields
+          act(\mathsf{Arith}\cdot \mathsf{TaintedInstr}\cdot \mathsf{TaintRes})\\
+          &&+
+          act(\mathsf{Arith}\cdot \neg \mathsf{TaintedInstr})\\
+        \mathsf{NoTaintMem} &\triangleq&
+          act(\mathsf{AnyMem}\cdot \neg \mathsf{TaintedInstr})\\
+        \mathsf{SecureMem} &\triangleq& \mathsf{PropTaintALU} + \mathsf{NoTaintMem}\\
+          &&+
+          act(\neg (\mathsf{Arith} + \mathsf{AnyMem}))
+      \end{array}
+      \]\\
+    %%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%% END SUBSECTION 5.1 %%%
+    %%% STANDARD TAINT     %%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%% BEGIN SUBSECTION 5.2 %%%
+    %%% SPECULATIVE TAINT    %%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+      \subsection{Speculative Taint}
+
+      \cite{2019stt}
+      \[
+      \begin{array}{r c l}
+        %Define inputs
+        \mathit{Instruction\ Fields}\ f_i &::=& \mathsf{Taint_{RS}}, \mathsf{Taint_{RT}}, \mathsf{Taint_{RD}}, \mathsf{OP}\\
+        \mathsf{OP} &::=& \mathsf{MEM_{READ}}\ |\ \mathsf{MEM_{WRITE}}\ |\ \mathsf{ALU} |\ \cdots \\
+        \mathit{Result\ Fields}\ f_r &::=& \mathsf{(*empty*)}\\\\
+
+        %Op Types
+        \mathsf{Arith}   &\triangleq& \mathsf{OP} = \mathsf{ALU}\\
+        \mathsf{Read}    &\triangleq& \mathsf{OP} = \mathsf{MEM_{READ}}\\
+        \mathsf{Write}   &\triangleq& \mathsf{OP} = \mathsf{MEM_{WRITE}}\\
+        \mathsf{AnyMem}  &\triangleq& \mathsf{Read} + \mathsf{Write}\\\\
+
+        %Sub Rules
+        \mathsf{TaintedInstr} &\triangleq& ( \mathsf{Taint_{RS}} = \mathsf{TRUE} ) + ( \mathsf{Taint_{RT}} = \mathsf{TRUE} )\\
+        \mathsf{TaintRes}     &\triangleq& \mathsf{Taint_{RD}} \leftarrow \mathsf{TRUE}\\\\
+
+        %Rule
+        \mathsf{PropTaintALU} &\triangleq&
+          %% Formerly injected TaintRes, but update (\leftarrow) is a policy of its own that operates on fields
+          act(\mathsf{Arith}\cdot \mathsf{TaintedInstr}\cdot \mathsf{TaintRes})\\
+          &&+
+          act(\mathsf{Arith}\cdot \neg \mathsf{TaintedInstr})\\
+        \mathsf{NoTaintMem} &\triangleq&
+          act(\mathsf{AnyMem}\cdot \neg \mathsf{TaintedInstr})\\
+        \mathsf{SecureMem} &\triangleq& \mathsf{PropTaintALU} + \mathsf{NoTaintMem}\\
+          &&+
+          act(\neg (\mathsf{Arith} + \mathsf{AnyMem}))
+      \end{array}
+      \]\\
+    %%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%% END SUBSECTION 5.2 %%%
+    %%% SPECULATIVE TAINT  %%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%
+%%% CITATIONS %%%
+%%%%%%%%%%%%%%%%%
+  \clearpage
+  % \begin{singlespace}
+    % \bibliographystyle{ACM-Reference-Format}
+    \bibliographystyle{unsrt}
+    \bibliography{Language}
+  % \end{singlespace}
+
+\end{document}
