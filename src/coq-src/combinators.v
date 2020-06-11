@@ -596,6 +596,10 @@ Require Import syntax.
 Notation "'`IF`' e '`THEN`' p1 '`ELSE`' p2" :=
   (PChoice (PTest e p1) (PTest (BNeg e) p2)) (at level 101).
 
+
+(* ************************)
+(*  SecJmp Example Policy *)
+(* ************************)
 Section test_secjmp.
   Variables i o : id TVec64.
   (*High-order 10 bits of immediate address are zeroed. Because the effective 
@@ -609,6 +613,9 @@ Section test_secjmp.
     `IF` jump `THEN` PTest sec_addr PId `ELSE` PId.
 End test_secjmp.
 
+(* *************************************)
+(*  Secure Control Flow Example Policy *)
+(* *************************************)
 Section scf.
   (*A control-flow isolation policy. We assume that the effective address
     is pre-calculated in the top 32 bits of the input vector. *)
@@ -623,6 +630,9 @@ Section scf.
     `IF` jump_indirect `THEN` PTest (BNeg sec_addr32) PId `ELSE` PId.    
 End scf.
 
+(* ****************************************)
+(*  Secure Failt Isolation Example Policy *)
+(* ****************************************)
 Section sfi.
   (*A write isolation policy, which we called SFI in the original paper. Note that 
     SFI sometimes refers to a combination of write isolation and control-flow isolation 
@@ -640,6 +650,9 @@ Section sfi.
     `IF` store `THEN` PConcat (PUpd mask) (PUpd force_range) `ELSE` PId.
 End sfi.
 
+(* ******************************)
+(*  Simple Taint Example Policy *)
+(* ******************************)
 Section taint.
   (*Taint tracking through ALU operations only (the monitors could be extended to 
     support other taint propagation rules).*)
@@ -680,18 +693,22 @@ Section taint.
             end).
 End taint.
 
-(*Section thesis_example.
-  Definition KernelPC := BFieldRange (ofromz 8191 (*0x0FFF*)
-*)
+(* *********************)
+(*  Print the Programs *)
+(* *********************)
 Require Import extraction.
 
-(* print the program *)
-
+(* ****************)
+(*  Define Fields *)
+(* ****************)
 Definition i : id TVec64 := "i".
 Definition o : id TVec64 := "o".
 Definition ri : id TVec64 := "ri".
 Definition ro : id TVec64 := "ro".
 
+(* ***********************)
+(*  Define Pols Compiled *)
+(* ********** *************)
 Definition sec_jmp_compiled : prog := compile i o sec_jmp.
 Definition SFI_compiled : prog := compile ri ro sfi.
 
@@ -705,6 +722,9 @@ Definition taint_compiled : prog := compile taint_i taint_o taint.
 
 Definition scf_compiled : prog := compile i o scf.
 
+(* ****************************)
+(*  Define HS Print Functions *)
+(* ****************************)
 Definition pretty_print_sec_jmp :=
   pretty_print_tb "secjmp" sec_jmp_compiled.
 Definition pretty_print_SFI :=
@@ -714,6 +734,9 @@ Definition pretty_print_taint :=
 Definition pretty_print_SCF := 
   pretty_print_tb "SCF" scf_compiled.
 
+(* ************************)
+(*  Extraction to Haskell *)
+(* ************************)
 (* run the program 'secjmp.hs' and pipe to a file to get verilog *)
 Extract Constant main => "Prelude.putStrLn pretty_print_sec_jmp".
 Extraction "secjmp.hs" pretty_print_sec_jmp main.
