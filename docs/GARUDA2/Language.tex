@@ -32,7 +32,7 @@
 %%% BEGIN TITLE PAGE %%%
 %%%%%%%%%%%%%%%%%%%%%%%%
   \title{\sysname}
-  \date{2020\\ Spring}
+  \date{2020\\ Fall}
 
   \author{
     Sage Sefton \\
@@ -102,12 +102,14 @@
             EXE Output Fields & $f_{Eo}$  & $::=$ & $f_{Eo_{1}} \mid \dots \mid f_{Eo_{k}}$\\
             MEM Input Fields  & $f_{Mi}$  & $::=$ & $f_{Mi_{1}} \mid \dots \mid f_{Mi_{k}}$\\
             Fields            & $f$       & $::=$ & $f_{Ei} \mid f_{Eo} \mid f_{Mi} $ \\
-            Instructions      & $i$       & $::=$ & $\{f_{i_{1}} = v_{i_{1}} ,\ \dots\ ,\ f_{i_{k}} = v_{i_{k}}\}$\\
+            Inputs            & $i$       & $::=$ & $\{f_{i_{1}} = v_{i_{1}} ,\ \dots\ ,\ f_{i_{k}} = v_{i_{k}}\}$\\
             Outputs           & $o$       & $::=$ & $\{f_{o_{1}} = v_{o_{1}} ,\ \dots\ ,\ f_{o_{k}} = v_{o_{k}}\}$\\
             Obfuscation Fxn   & $\lambda$ & $::=$ & $f \rightarrow f'$
             % Obfuscation Fxn   & $\mathbf{F}$  & $::=$ & $f \rightarrow f'$
             % TODO: There's got to be something clearer than F, maybe capital gamma, lambda?
-            % TODO: how do we define state in and state out?i
+            % TODO: how do we define state in and state out?
+            % TODO: Mention that Inputs and Outputs can generically refer to either EXE or MEM.
+            %       Indeed, the Outputs refers to both.
           \end{tabular}
           \caption{Definitions in \sysname.}
           \label{fig:spec:synt:defn}
@@ -156,7 +158,6 @@
   %%%%%%%%%%%%%%%%%%%%%%%%%
   %%% BEGIN SECTION 2.2 %%%
   %%% GARUDA SEMANTICS  %%%
-
   %%%%%%%%%%%%%%%%%%%%%%%%%
     \clearpage
     \subsection{Semantics}\label{sec:spec:sem}
@@ -169,8 +170,8 @@
             % Theory
             \interp{ \cdot }\ 
               :\ \ &
-              \mathbf{Stream}(I)\times \mathbf{Stream}(R) \rightarrow \\
-              & P(\mathbf{Stream}(I))\times P(\mathbf{Stream}(R)) 
+              \mathbf{Stream}(Eo)\times \mathbf{Stream}(Mi) \rightarrow \\
+              & P(\mathbf{Stream}(Eo))\times P(\mathbf{Stream}(Mi)) 
               \\
             % Falsity
             \interp{ 0 }(-, -)
@@ -178,75 +179,91 @@
               (\emptyset , \emptyset)
               \\ % or null-stream?
             % Identity
-            \interp{ 1 }(\mathit{is}, \mathit{rs})
+            \interp{ 1 }(\mathit{os}, \mathit{is})
               \triangleq\ &
-              (\{\mathit{is}\},\{\mathit{rs}\})
+              (\{\mathit{os}\},\{\mathit{is}\})
               \\
             % Test
-            \interp{ f=n }(\mathit{is}, \mathit{rs})
+            \interp{ f=n }(\mathit{os}, \mathit{is})
               \triangleq\ &
-              (\mathsf{filter}\ (f=n)\ \{\mathit{is}\},\
-               \mathsf{filter}\ (f=n)\ \{\mathit{rs}\}) 
+              (\mathsf{filter}\ (f=n)\ \{\mathit{os}\},\
+               \mathsf{filter}\ (f=n)\ \{\mathit{is}\}) 
               \\
             % Sum
-            \interp{ a + b }(\mathit{is}, \mathit{rs})
+            \interp{ a + b }(\mathit{os}, \mathit{is})
               \triangleq\ &
-              \interp { a }(\mathit{is}, \mathit{rs})\cup
-              \interp { b }(\mathit{is}, \mathit{rs}) \\
-              &\mathsf{where}\ (S_i^1, S_r^1)\cup (S_i^2, S_r^2)\triangleq
-                (S_i^1\cup S_i^2, S_r^1\cup S_r^2)\\
+              \interp { a }(\mathit{os}, \mathit{is})\cup
+              \interp { b }(\mathit{os}, \mathit{is}) \\
+              &\mathsf{where}\ (S_o^1, S_i^1)\cup (S_o^2, S_i^2)\triangleq
+                (S_o^1\cup S_o^2, S_i^1\cup S_i^2)\\
             % Product
-            \interp { a \cdot b }(\mathit{is}, \mathit{rs})
+            \interp { a \cdot b }(\mathit{os}, \mathit{is})
               \triangleq\ &
-              \interp { a }(\mathit{is}, \mathit{rs})\cap
-              \interp { b }(\mathit{is}, \mathit{rs}) \\
-              &\mathsf{where}\ (S_i^1, S_r^1)\cap (S_i^2, S_r^2)\triangleq
-                (S_i^1\cap S_i^2, S_r^1\cap S_r^2)\\
+              \interp { a }(\mathit{os}, \mathit{is})\cap
+              \interp { b }(\mathit{os}, \mathit{is}) \\
+              &\mathsf{where}\ (S_o^1, S_i^1)\cap (S_o^2, S_i^2)\triangleq
+                (S_o^1\cap S_o^2, S_i^1\cap S_i^2)\\
             % Negation
-            \interp { \neg a }(\mathit{is}, \mathit{rs})
+            \interp { \neg a }(\mathit{os}, \mathit{os})
               \triangleq\ &
-              \mathsf{let}\ (S_i, S_r) = \interp {a}(\mathit{is}, \mathit{rs}) \\
-              &\mathsf{in}\ (\{\mathit{is}\} - S_i, \{\mathit{rs}\} - S_r)
+              \mathsf{let}\ (S_o, S_i) = \interp {a}(\mathit{os}, \mathit{is}) \\
+              &\mathsf{in}\ (\{\mathit{os}\} - S_o, \{\mathit{is}\} - S_i)
               \\
           \end{align*}
-          \caption{The semantics of predicates in \sysname.}
+          \caption{The semantics of predicates in \sysname.  While predicates remain unchanged from \oldname, the theory changes slightly}
           \label{fig:garuda:sem:pol}
         \end{figure}
 
       \subsubsection{Semantics of Policies}\label{sec:spec:sem:pol}
         \begin{figure}
           \centering
-          \begin{align*}  
+          \begin{align*} 
+            % Theory
+            \interp{ \cdot }\ 
+              :\ \ &
+              \mathbf{Stream}(Eo)\times \mathbf{Stream}(Mi) \rightarrow \\
+              & P(\mathbf{Stream}(Eo))\times P(\mathbf{Stream}(Mi)) 
+              \\
+            % Obfuscation
+            \interp{(\lambda_{Encrypt}, \lambda_{Decrypt})}\
+              \triangleq\
+              & \mathsf{let}\ (os \rightarrow os' = \lambda_{Encrypt}),
+                            \ (is \rightarrow is' = \lambda_{Decrypt})\\
+              % & \mathsf{let}\ os \rightarrow os' = \lambda_{Encrypt}\\
+              % & \mathsf{and}\ is \rightarrow is' = \lambda_{Decrypt}\\
+              & \mathsf{in}\
+              (\{\mathit{os'}\}, \{\mathit{is'}\})
+              \\
             % Injection Action
-            \interp { inj_{i}(i) }(\mathit{is}, \mathit{rs})
+            \interp { inj_{Eo}(o) }(\mathit{os}, \mathit{is})
               \triangleq\ &
-              (\{\mathit{i : is}\}, \{\mathit{rs}\}) 
+              (\{\mathit{o : os}\}, \{\mathit{is}\}) 
               % or ::?  ; is sequential
               \\
             % Injection Result
-            \interp { inj_{r}(r) }(\mathit{is}, \mathit{rs})
+            \interp { inj_{Mi}(i) }(\mathit{os}, \mathit{is})
               \triangleq\ &
-              (\{\mathit{is}\},\{ \mathit{r : rs}\})
+              (\{\mathit{os}\},\{ \mathit{i : is}\})
               \\
             % Modification
-            \interp { f \leftarrow n }(is, rs)
+            \interp { f \leftarrow n }(os, is)
               \triangleq\ &
-              (\mathsf{map}\ (f\leftarrow n)\ \{is\},\
-               \mathsf{map}\ (f\leftarrow n)\ \{rs\})
+              (\mathsf{map}\ (f\leftarrow n)\ \{os\},\
+               \mathsf{map}\ (f\leftarrow n)\ \{is\})
               \\ %  could use editing?
             % Policy Union
-            \interp { p + q }(\mathit{is}, \mathit{rs})
+            \interp { p + q }(\mathit{os}, \mathit{is})
               \triangleq\ &
-              \interp { p }(\mathit{is}, \mathit{rs})\cup
-              \interp { q }(\mathit{is}, \mathit{rs}) \\
-              &\mathsf{where}\ (S_i^1, S_r^1)\cup (S_i^2, S_r^2)\triangleq
-                (S_i^1\cup S_i^2, S_r^1\cup S_r^2)\\
+              \interp { p }(\mathit{os}, \mathit{is})\cup
+              \interp { q }(\mathit{os}, \mathit{is}) \\
+              &\mathsf{where}\ (S_o^1, S_i^1)\cup (S_o^2, S_i^2)\triangleq
+                (S_o^1\cup S_o^2, S_i^1\cup S_i^2)\\
               % A union of the streams gives a nondeterministic machine.
             % Policy Concatnation
-            \interp { p \cdot q }(\mathit{is}, \mathit{rs})
+            \interp { p \cdot q }(\mathit{os}, \mathit{is})
               \triangleq\ &
-              \mathsf{let}\ (S_i, S_r) = \interp{p}(is, rs)\\
-              &\mathsf{in}\ \bigcup \{\interp{q}(\mathit{is}',\mathit{rs}')\ |\ \mathit{is}'\in S_i, \mathit{rs'}\in S_r\}\\
+              \mathsf{let}\ (S_o, S_i) = \interp{p}(os, is)\\
+              &\mathsf{in}\ \bigcup \{\interp{q}(\mathit{os}',\mathit{is}')\ |\ \mathit{os}'\in S_o, \mathit{is'}\in S_i\}\\
               \\
             % Defn. of Filter
             \interp{\mathsf{filter}\ f}(S)
@@ -259,182 +276,160 @@
           \caption{The semantics of policies in \sysname.}
           \label{fig:spec:sem:pol}
         \end{figure}
-  %}
+  %%%%%%%%%%%%%%%%%%%%%%%%%
+  %%% BEGIN SECTION 2.2 %%%
+  %%% GARUDA SEMANTICS  %%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%
-%%% END OF SECTION 3 %%%
-%%% GARUDA SEMANTICS %%%
+%%% END OF SECTION 2 %%%
+%%% GARUDA SPECIFICS %%%
 %%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% BEGIN SECTION 4     %%%
-%%% INTERMEDIATE SYNTAX %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  \cleardoublepage
-  \section{Intermediate Syntax}\label{sec:isyn}
-
-    \begin{tabular}{l r r l l}
-      %Definitions table
-      Values        & $v$     & $::=$     & $\mathsf{INSTR\ |\ RES}$ &\\
-      Registers     & $b$     & $::=$     & $\mathsf{reg}$           &\\
-      \\
-      %Predicates table
-      Expressions & $e$ & $::=$  & $read(b)$       
-                        & \textit{Read Reg}\\
-                  &     & $\mid$ & $write(b,v)$    
-                        & \textit{Write Value to Reg}\\
-                  &     & $\mid$ & $let\ x = e_1\ in\ e_2$ 
-                        & \textit{Assignment}\\  
-                  &     & $\mid$ & $e_1\ ||\ e_2$ 
-                        & \textit{Parallel}\\
-                  &     & $\mid$ & $f(e_1)$        
-                        & \textit{Apply Function} \\  
-                  &     & $\mid$ & $if\ v = n\ then\ e_1\ else\ e_2$
-                        & \textit{Conditional} \\
-                  &     & $\mid$ & $e_1\ \&\&\ e_2$ 
-                        & \textit{Product (AND)}\\
-                  &     & $\mid$ & $e_1 ; e_2$
-                        & \textit{Concatination}\\
-                  &     & $\mid$ & $forever\ e$ 
-                        & \textit{Hardwire}
-    \end{tabular}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% END OF SECTION 4    %%%
-%%% INTERMEDIATE SYNTAX %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% BEGIN SECTION 5   %%%
-%%% INTERMEDIATE COMP %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%
-  \clearpage
-  \section{Intermediate Semantics}\label{sec:icomp}
-    
-    Assume all $\mathbf{C}$ is short for $\mathbf{C}_{(i_{in},i_{out},r_{in},r_{out})}$ if unspecified.
-    {\fontsize{12pt}{14pt}\selectfont
-    %Semantics align
-    %\begin{align*}
-    %    DeMux(iin, b1, b2)\
-    %        =\ &
-    %        let\ x=read(iin)\\
-    %        & in (write(b1, x);write(b2, x))\\
-    %        &in\ e_a\ ||\ e_b\\
-    %\end{align*}
-    \begin{align*}
-      %Falsity
-      \mathbf{C}[0]\ 
-        =\ &
-        let\ i\_bog = \text{new buf}\\
-        &\quad\ \ r\_bog = \text{new buf}\\
-        &in\ write(i_{out}, i\_bog)\\
-        &\quad  write(r_{out}, r\_bog)\\
-      %Identity
-      \mathbf{C}[1]\ 
-        =\ &
-        write(i_{out}, read(i_{in}))\\
-        &write(r_{out}, read(r_{in}))
-        \\
-      %Filter
-      \mathbf{C}[f = n]\
-         =\
-         &if\ i_{in}=n\ then\\
-         &\quad write(i_{out}, read(i_{in}))\\
-         &\quad else\ \mathbf{C}_{(i_{in}, i_{out}, -, -})[0]\\
-         &if\ r_{in}=n\ then\\
-         &\quad write(r_{out}, read(r_{in}))\\
-         &\quad else\ \mathbf{C}_{(-, -, r_{in}, r_{out}})[0]\\
-    \end{align*}
-    \begin{align*}
-       %Predicate Addition
-      \mathbf{C}[\mathsf{test}(a + b)]\ 
-        =\ &
-        let\ e_{aii}, e_{ari}, e_{bii}, e_{bri} = \text{new buf}\ in\\
-           &DeMux(i_{in}, e_{aii}, e_{bii})\ ||\ DeMux(r_{in}, e_{ari}, e_{bri})\\
-        &let\ e_a = \mathbf{C}_{(e_{aii},e_{aio},e_{ari},e_{aro})}[a]\\
-        &\quad\ \ e_b = \mathbf{C}_{(e_{bii},e_{bio},e_{bri},e_{bro})}[b]\\
-        &in\ Mux(e_a\ \ e_b, (i_{out},r_{out}))\\
-      %Predicate Product
-      \mathbf{C}[\mathsf{test}(a \cdot b)]\ 
-         =\ &\mathbf{C}[\mathsf{test}(a) \cdot \mathsf{test}(b)] \\
-      %Predicate Negation
-      \mathbf{C}[\neg a]\ 
-         =\ 
-         &if\ \neg a\ then\\
-         &\quad write(i_{out}, read(i_{in}))\\
-         &\quad write(r_{out}, read(r_{in}))\\
-         &else\ \mathbf{C}[0]\\
-      %Slice to Action
-      \mathbf{C}[act(p)]\ 
-        =\ &
-        let\ r\_bog_i = \text{new buf}\\
-        &\quad\ \ r\_bog_o = \text{new buf}\\
-        &in\ e_p = \mathbf{C}_{(i_{in}, i_{out}, r\_bog_i, r\_bog_o)}[p]\\
-        &e_p\ ||\ write(r_{out}, read(r_{in}))
-        %or
-        % let r = read(r_in)
-        % in write(r_out, r)
-        \\
-      %Slice to Result
-      \mathbf{C}[res(p)]\ 
-        =\ &
-        let\ i\_bog_i = \text{new buf}\\
-        &\quad\ \ i\_bog_o = \text{new buf}\\
-        &in\ e_p = \mathbf{C}_{(i\_bog_i, i\_bog_o, r_{in}, r_{out})}[p]\\
-        &e_p\ ||\ write(i_{out}, read(i_{in}))
-        \\
-      %Inject Instruction
-      \mathbf{C}[inj_iV]\ 
-        =\ &
-        write(i_{out}, V)
-        \\
-      %Inject Result
-      \mathbf{C}[inj_rV]\ 
-        =\ &
-        write(r_{out}, V)
-        \\
-      %Assignment
-      \mathbf{C}[f \leftarrow n]\ 
-        =\ &
-        let\ i' = f(read(i_{in}))\\
-        &\quad\ \ r' = f(read(r_{in}))\\
-        &in\ write(i_{out}, i')\\
-        &\quad \ write(r_{out}, r')
-        \\
-      %Policy Nondeterministic Choice
-      \mathbf{C}[p + q]\ 
-        =\ &
-        let\ e_p = \mathbf{C}[p]\\
-        &\quad\ \ e_q = \mathbf{C}[q]\\
-        &in\ Mux(e_p, e_q, (i_{out},r_{out}))
-        \\
-      %Policy Sequence
-      \mathbf{C}[p \cdot q]\ 
-        =\ &
-        let\ i_{mid} = \text{new buf}\\
-        &\quad\ \ r_{mid} = \text{new buf}\\
-        &\quad\ \ e_p = \mathbf{C}_{(i_{in}, i_{mid}, r_{in}, r_{mid})}[p]\\
-        &\quad\ \ e_q = \mathbf{C}_{(i_{mid}, i_{out}, r_{mid}, r_{out})}[q]\\
-        &in\ e_p\ ;\ e_q
-      %Define filter
-      %Define map
-    \end{align*}
-    }
-%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% END OF SECTION 5  %%%
-%%% INTERMEDIATE COMP %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 %%%%%%%%%%%%%%%%%%%%%%%
-%%% BEGIN SECTION 5 %%%
+%%% BEGIN SECTION 4 %%%
+%%% COMPILATION     %%%
+%%%%%%%%%%%%%%%%%%%%%%%
+  \clearpage
+  \section{Compilation to Verilog}\label{sec:compile}
+    \subsection{The Intermediate Language}\label{sec:compile:int}
+
+      \begin{figure}
+        \centering
+        \begin{tabular}{l r r l l}
+          %Definitions table
+          Values        & $v$     & $::=$     & $\mathsf{INSTR\ |\ RES}$ &\\
+          Registers     & $b$     & $::=$     & $\mathsf{reg}$           &\\
+          \\
+          %Predicates table
+          Expressions & $e$ & $::=$  & $read(b)$       
+                            & \textit{Read Reg}\\
+                      &     & $\mid$ & $write(b,v)$    
+                            & \textit{Write Value to Reg}\\
+                      &     & $\mid$ & $let\ x = e_1\ in\ e_2$ 
+                            & \textit{Assignment}\\  
+                      &     & $\mid$ & $e_1\ ||\ e_2$ 
+                            & \textit{Parallel}\\
+                      &     & $\mid$ & $f(e_1)$        
+                            & \textit{Apply Function} \\  
+                      &     & $\mid$ & $if\ v = n\ then\ e_1\ else\ e_2$
+                            & \textit{Conditional} \\
+                      &     & $\mid$ & $e_1\ \&\&\ e_2$ 
+                            & \textit{Product (AND)}\\
+                      &     & $\mid$ & $e_1 ; e_2$
+                            & \textit{Concatenation}\\
+                      &     & $\mid$ & $forever\ e$ 
+                            & \textit{Hardwire}
+        \end{tabular}
+        \caption{The language \sysname uses as a means to facilitate compilation.}
+        \label{fig:compile:int}
+      \end{figure}
+    \subsection{Compiling \sysname to the Intermediate}\label{sec:compile:compile}
+      We define a function $\mathbf{C}$ to be the compilation of some predicate or policy in \sysname to the intermediate language.
+      $\mathbf{C}$ operates on the four ports of the \sysname monitor.
+      These consist of the inputs and outputs of each of the instruction and result streams.
+      Assume all $\mathbf{C}$ are short for $\mathbf{C}_{(i_{in},i_{out},r_{in},r_{out})}$ if unspecified.
+
+      \subsubsection{Compiling Predicates}\label{sec:compile:compile:pred}
+        \begin{figure}
+          \begin{align*}
+            %Falsity
+            \mathbf{C}[0]\ 
+              =\ &
+              let\ i\_bog = \text{new buf}\\
+              &\quad\ \ r\_bog = \text{new buf}\\
+              &in\ write(i_{out}, i\_bog)\\
+              &\quad  write(r_{out}, r\_bog)\\
+            %Identity
+            \mathbf{C}[1]\ 
+              =\ &
+              write(i_{out}, read(i_{in}))\\
+              &write(r_{out}, read(r_{in}))
+              \\
+            %Filter
+            \mathbf{C}[f = n]\
+              =\
+              &if\ i_{in}=n\ then\\
+              &\quad write(i_{out}, read(i_{in}))\\
+              &\quad else\ \mathbf{C}_{(i_{in}, i_{out}, -, -})[0]\\
+              &if\ r_{in}=n\ then\\
+              &\quad write(r_{out}, read(r_{in}))\\
+              &\quad else\ \mathbf{C}_{(-, -, r_{in}, r_{out}})[0]\\
+            %Predicate Addition
+            \mathbf{C}[\mathsf{test}(a + b)]\ 
+              =\ &
+              let\ e_{aii}, e_{ari}, e_{bii}, e_{bri} = \text{new buf}\ in\\
+              & let\ e_{aio}, e_{aro}, e_{bio}, e_{bro} = \text{new buf}\ in\\
+                 &DeMux(i_{in}, e_{aii}, e_{bii})\ ||\ DeMux(r_{in}, e_{ari}, e_{bri})\\
+              &let\ e_a = \mathbf{C}_{(e_{aii},e_{aio},e_{ari},e_{aro})}[a]\\
+              &\quad\ \ e_b = \mathbf{C}_{(e_{bii},e_{bio},e_{bri},e_{bro})}[b]\\
+              &in\ Mux(e_a\ \ e_b, (i_{out},r_{out}))\\
+            %Predicate Product
+            \mathbf{C}[\mathsf{test}(a \cdot b)]\ 
+              =\ &\mathbf{C}[\mathsf{test}(a) \cdot \mathsf{test}(b)] \\
+            %Predicate Negation
+            \mathbf{C}[\neg a]\ 
+              =\ 
+              &if\ \neg a\ then\\
+              &\quad write(i_{out}, read(i_{in}))\\
+              &\quad write(r_{out}, read(r_{in}))\\
+              &else\ \mathbf{C}[0]\\
+          \end{align*}
+          \caption{Compilation of \sysname predicates into the intermediate language.}
+          \label{fig:compile:compile:pred}
+        \end{figure}
+
+      \subsubsection{Compiling Policies}\label{sec:compile:compile:pol}
+        \begin{figure}
+          \begin{align*}
+            %Inject Instruction
+            \mathbf{C}[inj_iV]\ 
+              =\ &
+              write(i_{out}, V)\\
+            %Inject Result
+            \mathbf{C}[inj_rV]\ 
+              =\ &
+              write(r_{out}, V)\\
+            %Assignment
+            \mathbf{C}[f \leftarrow n]\ 
+              =\ &
+              let\ i' = f(read(i_{in}))\\
+              &\quad\ \ r' = f(read(r_{in}))\\
+              &in\ write(i_{out}, i')\\
+              &\quad \ write(r_{out}, r')\\
+            %Policy Nondeterministic Choice
+            \mathbf{C}[p + q]\ 
+              =\ &
+              let\ e_p = \mathbf{C}[p]\\
+              &\quad\ \ e_q = \mathbf{C}[q]\\
+              &in\ Mux(e_p, e_q, (i_{out},r_{out}))\\
+            %Policy Sequence
+            \mathbf{C}[p \cdot q]\ 
+              =\ &
+              let\ i_{mid} = \text{new buf}\\
+              &\quad\ \ r_{mid} = \text{new buf}\\
+              &\quad\ \ e_p = \mathbf{C}_{(i_{in}, i_{mid}, r_{in}, r_{mid})}[p]\\
+              &\quad\ \ e_q = \mathbf{C}_{(i_{mid}, i_{out}, r_{mid}, r_{out})}[q]\\
+              &in\ e_p\ ;\ e_q
+          \end{align*}
+          \caption{Compilation of \sysname policies into the intermediate language.}
+          \label{fig:compile:compile:pol}
+        \end{figure}
+%%%%%%%%%%%%%%%%%%%%%
+%%% END SECTION 4 %%%
+%%% COMPILATION   %%%
+%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%
+%%% BEGIN SECTION 3 %%%
 %%% APPLICATIONS    %%%
 %%%%%%%%%%%%%%%%%%%%%%%
   \clearpage
   \section{Applications of \sysname}
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% BEGIN SUBSECTION 5.1 %%%
+    %%% BEGIN SUBSECTION 3.1 %%%
     %%% STANDARD TAINT       %%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%
     \subsection{Standard Taint}
@@ -484,12 +479,12 @@
       \end{array}
       \]\\
     %%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% END SUBSECTION 5.1 %%%
+    %%% END SUBSECTION 3.1 %%%
     %%% STANDARD TAINT     %%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% BEGIN SUBSECTION 5.2 %%%
+    %%% BEGIN SUBSECTION 3.2 %%%
     %%% SPECULATIVE TAINT    %%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%
       \subsection{Speculative Taint}
@@ -526,7 +521,7 @@
       \end{array}
       \]\\
     %%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% END SUBSECTION 5.2 %%%
+    %%% END SUBSECTION 3.2 %%%
     %%% SPECULATIVE TAINT  %%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%
 
