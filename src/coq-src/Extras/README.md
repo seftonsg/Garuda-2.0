@@ -1,1 +1,0 @@
-The files in this directory do not seem to be necessary for combinators.v.  They are causing issues in compilation, so I've decided to exclude them for now.
