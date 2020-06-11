@@ -1,3 +1,12 @@
+(* *********************************************************************)
+(*                                                                     *)
+(*               The Syntax of the Intermediate Language               *)
+(*                                                                     *)
+(*  More specifically, this file includes the Notations and supporting *)
+(*  definitions to use the language described in lang.v                *)
+(*                                                                     *)
+(* *********************************************************************)
+
 Set Implicit Arguments.
 Unset Strict Implicit.
 
