@@ -283,164 +283,135 @@
 %%%%%%%%%%%%%%%%%%%%%%%%
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% BEGIN SECTION 4     %%%
-%%% INTERMEDIATE SYNTAX %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  \cleardoublepage
-  \section{Intermediate Syntax}\label{sec:isyn}
-
-    \begin{tabular}{l r r l l}
-      %Definitions table
-      Values        & $v$     & $::=$     & $\mathsf{INSTR\ |\ RES}$ &\\
-      Registers     & $b$     & $::=$     & $\mathsf{reg}$           &\\
-      \\
-      %Predicates table
-      Expressions & $e$ & $::=$  & $read(b)$       
-                        & \textit{Read Reg}\\
-                  &     & $\mid$ & $write(b,v)$    
-                        & \textit{Write Value to Reg}\\
-                  &     & $\mid$ & $let\ x = e_1\ in\ e_2$ 
-                        & \textit{Assignment}\\  
-                  &     & $\mid$ & $e_1\ ||\ e_2$ 
-                        & \textit{Parallel}\\
-                  &     & $\mid$ & $f(e_1)$        
-                        & \textit{Apply Function} \\  
-                  &     & $\mid$ & $if\ v = n\ then\ e_1\ else\ e_2$
-                        & \textit{Conditional} \\
-                  &     & $\mid$ & $e_1\ \&\&\ e_2$ 
-                        & \textit{Product (AND)}\\
-                  &     & $\mid$ & $e_1 ; e_2$
-                        & \textit{Concatination}\\
-                  &     & $\mid$ & $forever\ e$ 
-                        & \textit{Hardwire}
-    \end{tabular}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% END OF SECTION 4    %%%
-%%% INTERMEDIATE SYNTAX %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% BEGIN SECTION 5   %%%
-%%% INTERMEDIATE COMP %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%
+%%% BEGIN SECTION 5 %%%
+%%% COMPILATION     %%%
+%%%%%%%%%%%%%%%%%%%%%%%
   \clearpage
-  \section{Intermediate Semantics}\label{sec:icomp}
-    
-    Assume all $\mathbf{C}$ is short for $\mathbf{C}_{(i_{in},i_{out},r_{in},r_{out})}$ if unspecified.
-    {\fontsize{12pt}{14pt}\selectfont
-    %Semantics align
-    %\begin{align*}
-    %    DeMux(iin, b1, b2)\
-    %        =\ &
-    %        let\ x=read(iin)\\
-    %        & in (write(b1, x);write(b2, x))\\
-    %        &in\ e_a\ ||\ e_b\\
-    %\end{align*}
-    \begin{align*}
-      %Falsity
-      \mathbf{C}[0]\ 
-        =\ &
-        let\ i\_bog = \text{new buf}\\
-        &\quad\ \ r\_bog = \text{new buf}\\
-        &in\ write(i_{out}, i\_bog)\\
-        &\quad  write(r_{out}, r\_bog)\\
-      %Identity
-      \mathbf{C}[1]\ 
-        =\ &
-        write(i_{out}, read(i_{in}))\\
-        &write(r_{out}, read(r_{in}))
-        \\
-      %Filter
-      \mathbf{C}[f = n]\
-         =\
-         &if\ i_{in}=n\ then\\
-         &\quad write(i_{out}, read(i_{in}))\\
-         &\quad else\ \mathbf{C}_{(i_{in}, i_{out}, -, -})[0]\\
-         &if\ r_{in}=n\ then\\
-         &\quad write(r_{out}, read(r_{in}))\\
-         &\quad else\ \mathbf{C}_{(-, -, r_{in}, r_{out}})[0]\\
-    \end{align*}
-    \begin{align*}
-       %Predicate Addition
-      \mathbf{C}[\mathsf{test}(a + b)]\ 
-        =\ &
-        let\ e_{aii}, e_{ari}, e_{bii}, e_{bri} = \text{new buf}\ in\\
-           &DeMux(i_{in}, e_{aii}, e_{bii})\ ||\ DeMux(r_{in}, e_{ari}, e_{bri})\\
-        &let\ e_a = \mathbf{C}_{(e_{aii},e_{aio},e_{ari},e_{aro})}[a]\\
-        &\quad\ \ e_b = \mathbf{C}_{(e_{bii},e_{bio},e_{bri},e_{bro})}[b]\\
-        &in\ Mux(e_a\ \ e_b, (i_{out},r_{out}))\\
-      %Predicate Product
-      \mathbf{C}[\mathsf{test}(a \cdot b)]\ 
-         =\ &\mathbf{C}[\mathsf{test}(a) \cdot \mathsf{test}(b)] \\
-      %Predicate Negation
-      \mathbf{C}[\neg a]\ 
-         =\ 
-         &if\ \neg a\ then\\
-         &\quad write(i_{out}, read(i_{in}))\\
-         &\quad write(r_{out}, read(r_{in}))\\
-         &else\ \mathbf{C}[0]\\
-      %Slice to Action
-      \mathbf{C}[act(p)]\ 
-        =\ &
-        let\ r\_bog_i = \text{new buf}\\
-        &\quad\ \ r\_bog_o = \text{new buf}\\
-        &in\ e_p = \mathbf{C}_{(i_{in}, i_{out}, r\_bog_i, r\_bog_o)}[p]\\
-        &e_p\ ||\ write(r_{out}, read(r_{in}))
-        %or
-        % let r = read(r_in)
-        % in write(r_out, r)
-        \\
-      %Slice to Result
-      \mathbf{C}[res(p)]\ 
-        =\ &
-        let\ i\_bog_i = \text{new buf}\\
-        &\quad\ \ i\_bog_o = \text{new buf}\\
-        &in\ e_p = \mathbf{C}_{(i\_bog_i, i\_bog_o, r_{in}, r_{out})}[p]\\
-        &e_p\ ||\ write(i_{out}, read(i_{in}))
-        \\
-      %Inject Instruction
-      \mathbf{C}[inj_iV]\ 
-        =\ &
-        write(i_{out}, V)
-        \\
-      %Inject Result
-      \mathbf{C}[inj_rV]\ 
-        =\ &
-        write(r_{out}, V)
-        \\
-      %Assignment
-      \mathbf{C}[f \leftarrow n]\ 
-        =\ &
-        let\ i' = f(read(i_{in}))\\
-        &\quad\ \ r' = f(read(r_{in}))\\
-        &in\ write(i_{out}, i')\\
-        &\quad \ write(r_{out}, r')
-        \\
-      %Policy Nondeterministic Choice
-      \mathbf{C}[p + q]\ 
-        =\ &
-        let\ e_p = \mathbf{C}[p]\\
-        &\quad\ \ e_q = \mathbf{C}[q]\\
-        &in\ Mux(e_p, e_q, (i_{out},r_{out}))
-        \\
-      %Policy Sequence
-      \mathbf{C}[p \cdot q]\ 
-        =\ &
-        let\ i_{mid} = \text{new buf}\\
-        &\quad\ \ r_{mid} = \text{new buf}\\
-        &\quad\ \ e_p = \mathbf{C}_{(i_{in}, i_{mid}, r_{in}, r_{mid})}[p]\\
-        &\quad\ \ e_q = \mathbf{C}_{(i_{mid}, i_{out}, r_{mid}, r_{out})}[q]\\
-        &in\ e_p\ ;\ e_q
-      %Define filter
-      %Define map
-    \end{align*}
-    }
-%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% END OF SECTION 5  %%%
-%%% INTERMEDIATE COMP %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%
+  \section{Compilation to Verilog}\label{sec:compile}
+    \subsection{The Intermediate Language}\label{sec:compile:int}
+
+      \begin{figure}
+        \centering
+        \begin{tabular}{l r r l l}
+          %Definitions table
+          Values        & $v$     & $::=$     & $\mathsf{INSTR\ |\ RES}$ &\\
+          Registers     & $b$     & $::=$     & $\mathsf{reg}$           &\\
+          \\
+          %Predicates table
+          Expressions & $e$ & $::=$  & $read(b)$       
+                            & \textit{Read Reg}\\
+                      &     & $\mid$ & $write(b,v)$    
+                            & \textit{Write Value to Reg}\\
+                      &     & $\mid$ & $let\ x = e_1\ in\ e_2$ 
+                            & \textit{Assignment}\\  
+                      &     & $\mid$ & $e_1\ ||\ e_2$ 
+                            & \textit{Parallel}\\
+                      &     & $\mid$ & $f(e_1)$        
+                            & \textit{Apply Function} \\  
+                      &     & $\mid$ & $if\ v = n\ then\ e_1\ else\ e_2$
+                            & \textit{Conditional} \\
+                      &     & $\mid$ & $e_1\ \&\&\ e_2$ 
+                            & \textit{Product (AND)}\\
+                      &     & $\mid$ & $e_1 ; e_2$
+                            & \textit{Concatenation}\\
+                      &     & $\mid$ & $forever\ e$ 
+                            & \textit{Hardwire}
+        \end{tabular}
+        \caption{The language \sysname uses as a means to facilitate compilation.}
+        \label{fig:compile:int}
+      \end{figure}
+    \subsection{Compiling \sysname to the Intermediate}\label{sec:compile:compile}
+      We define a function $\mathbf{C}$ to be the compilation of some predicate or policy in \sysname to the intermediate language.
+      $\mathbf{C}$ operates on the four ports of the \sysname monitor.
+      These consist of the inputs and outputs of each of the instruction and result streams.
+      Assume all $\mathbf{C}$ are short for $\mathbf{C}_{(i_{in},i_{out},r_{in},r_{out})}$ if unspecified.
+
+      \subsubsection{Compiling Predicates}\label{sec:compile:compile:pred}
+        \begin{figure}
+          \begin{align*}
+            %Falsity
+            \mathbf{C}[0]\ 
+              =\ &
+              let\ i\_bog = \text{new buf}\\
+              &\quad\ \ r\_bog = \text{new buf}\\
+              &in\ write(i_{out}, i\_bog)\\
+              &\quad  write(r_{out}, r\_bog)\\
+            %Identity
+            \mathbf{C}[1]\ 
+              =\ &
+              write(i_{out}, read(i_{in}))\\
+              &write(r_{out}, read(r_{in}))
+              \\
+            %Filter
+            \mathbf{C}[f = n]\
+              =\
+              &if\ i_{in}=n\ then\\
+              &\quad write(i_{out}, read(i_{in}))\\
+              &\quad else\ \mathbf{C}_{(i_{in}, i_{out}, -, -})[0]\\
+              &if\ r_{in}=n\ then\\
+              &\quad write(r_{out}, read(r_{in}))\\
+              &\quad else\ \mathbf{C}_{(-, -, r_{in}, r_{out}})[0]\\
+            %Predicate Addition
+            \mathbf{C}[\mathsf{test}(a + b)]\ 
+              =\ &
+              let\ e_{aii}, e_{ari}, e_{bii}, e_{bri} = \text{new buf}\ in\\
+              & let\ e_{aio}, e_{aro}, e_{bio}, e_{bro} = \text{new buf}\ in\\
+                 &DeMux(i_{in}, e_{aii}, e_{bii})\ ||\ DeMux(r_{in}, e_{ari}, e_{bri})\\
+              &let\ e_a = \mathbf{C}_{(e_{aii},e_{aio},e_{ari},e_{aro})}[a]\\
+              &\quad\ \ e_b = \mathbf{C}_{(e_{bii},e_{bio},e_{bri},e_{bro})}[b]\\
+              &in\ Mux(e_a\ \ e_b, (i_{out},r_{out}))\\
+            %Predicate Product
+            \mathbf{C}[\mathsf{test}(a \cdot b)]\ 
+              =\ &\mathbf{C}[\mathsf{test}(a) \cdot \mathsf{test}(b)] \\
+            %Predicate Negation
+            \mathbf{C}[\neg a]\ 
+              =\ 
+              &if\ \neg a\ then\\
+              &\quad write(i_{out}, read(i_{in}))\\
+              &\quad write(r_{out}, read(r_{in}))\\
+              &else\ \mathbf{C}[0]\\
+          \end{align*}
+          \caption{Compilation of \sysname predicates into the intermediate language.}
+          \label{fig:compile:compile:pred}
+        \end{figure}
+
+      \subsubsection{Compiling Policies}\label{sec:compile:compile:pol}
+        \begin{figure}
+          \begin{align*}
+            %Inject Instruction
+            \mathbf{C}[inj_iV]\ 
+              =\ &
+              write(i_{out}, V)\\
+            %Inject Result
+            \mathbf{C}[inj_rV]\ 
+              =\ &
+              write(r_{out}, V)\\
+            %Assignment
+            \mathbf{C}[f \leftarrow n]\ 
+              =\ &
+              let\ i' = f(read(i_{in}))\\
+              &\quad\ \ r' = f(read(r_{in}))\\
+              &in\ write(i_{out}, i')\\
+              &\quad \ write(r_{out}, r')\\
+            %Policy Nondeterministic Choice
+            \mathbf{C}[p + q]\ 
+              =\ &
+              let\ e_p = \mathbf{C}[p]\\
+              &\quad\ \ e_q = \mathbf{C}[q]\\
+              &in\ Mux(e_p, e_q, (i_{out},r_{out}))\\
+            %Policy Sequence
+            \mathbf{C}[p \cdot q]\ 
+              =\ &
+              let\ i_{mid} = \text{new buf}\\
+              &\quad\ \ r_{mid} = \text{new buf}\\
+              &\quad\ \ e_p = \mathbf{C}_{(i_{in}, i_{mid}, r_{in}, r_{mid})}[p]\\
+              &\quad\ \ e_q = \mathbf{C}_{(i_{mid}, i_{out}, r_{mid}, r_{out})}[q]\\
+              &in\ e_p\ ;\ e_q
+          \end{align*}
+          \caption{Compilation of \sysname policies into the intermediate language.}
+          \label{fig:compile:compile:pol}
+        \end{figure}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%
