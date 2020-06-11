@@ -223,7 +223,17 @@
               :\ \ &
               \mathbf{Stream}(Eo)\times \mathbf{Stream}(Mi) \rightarrow \\
               & P(\mathbf{Stream}(Eo))\times P(\mathbf{Stream}(Mi)) 
-              \\ 
+              \\
+            % Obfuscation
+            \interp{(\lambda_{Encrypt}, \lambda_{Decrypt})}\
+              \triangleq\
+              & \mathsf{let}\ (os \rightarrow os' = \lambda_{Encrypt}),
+                            \ (is \rightarrow is' = \lambda_{Decrypt})\\
+              % & \mathsf{let}\ os \rightarrow os' = \lambda_{Encrypt}\\
+              % & \mathsf{and}\ is \rightarrow is' = \lambda_{Decrypt}\\
+              & \mathsf{in}\
+              (\{\mathit{os'}\}, \{\mathit{is'}\})
+              \\
             % Injection Action
             \interp { inj_{Eo}(o) }(\mathit{os}, \mathit{is})
               \triangleq\ &
