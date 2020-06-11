@@ -98,12 +98,14 @@
         \begin{figure}
           \centering
           \begin{tabular}{l r c l}
-            Instruction Fields & $f_{i}$ & $::=$ & $f_{i_{1}} \mid \dots \mid f_{i_{k}}$\\
-            Result Fields      & $f_{r}$ & $::=$ & $f_{r_{1}} \mid \dots \mid f_{r_{k}}$\\
-            Fields             & $f$     & $::=$ & $f_i \mid f_r$ \\
-            Instructions       & $i$     & $::=$ & $\{f_{i_{1}} = v_{i_{1}} ,\ \dots\ ,\ f_{i_{k}} = v_{i_{k}}\}$\\
-            Results            & $r$     & $::=$ & $\{f_{r_{1}} = v_{r_{1}} ,\ \dots\ ,\ f_{r_{k}} = v_{r_{k}}\}$\\
-            Obfuscation Fxn    & $ob{}$  & $::=$ & $fxn(f_i) \mid fxn(f_o)$
+            EXE Input Fields  & $f_{Ei}$ & $::=$ & $f_{Ei_{1}} \mid \dots \mid f_{Ei_{k}}$\\
+            EXE Output Fields & $f_{Eo}$ & $::=$ & $f_{Eo_{1}} \mid \dots \mid f_{Eo_{k}}$\\
+            MEM Input Fields  & $f_{Mi}$ & $::=$ & $f_{Mi_{1}} \mid \dots \mid f_{Mi_{k}}$\\
+            Fields            & $f$      & $::=$ & $f_{Ei} \mid f_{Eo} \mid f_{Mi} $ \\
+            Instructions      & $i$      & $::=$ & $\{f_{i_{1}} = v_{i_{1}} ,\ \dots\ ,\ f_{i_{k}} = v_{i_{k}}\}$\\
+            Outputs           & $o$      & $::=$ & $\{f_{o_{1}} = v_{o_{1}} ,\ \dots\ ,\ f_{o_{k}} = v_{o_{k}}\}$\\
+            Obfuscation Fxn   & $\mathbf{F}$  & $::=$ & $f \rightarrow f'$
+            % TODO: There's got to be something clearer than F, maybe capital gamma?j
             % TODO: how do we define state in and state out?i
           \end{tabular}
           \caption{Definitions in \sysname.}
