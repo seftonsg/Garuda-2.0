@@ -50,11 +50,16 @@ Fixpoint size (f : fld) : Int64.int :=
   | PC => Int64.repr 64                        
   end.
 
-Inductive pred {t:ty} : Type := 
-| BPred : binop -> pred -> pred -> pred
-| BZero : pred
-| BNeg : pred -> pred
-| BField : fld -> interp_ty t -> pred.
+Inductive pred {t:ty} : Type :=
+  (* Binary Operation of Two Predicates *)
+  (* Sum, Product *)
+  | BPred : binop -> pred -> pred -> pred
+  (* Falsity *)
+  | BZero : pred
+  (* Negation *)
+  | BNeg : pred -> pred
+  (* Test *) (* TODO: double check *)
+  | BField : fld -> interp_ty t -> pred.
 
 Arguments pred t : clear implicits.
 
@@ -63,16 +68,25 @@ Definition BFieldRange t (f:fld) (i:Int64.int) (v:interp_ty t) : pred t :=
   BField (OffsetFld i f) v.
 
 Inductive pol : ty -> ty -> Type :=
-| PTest : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pred ity -> pol ity oty -> pol ity oty 
-| PUpd : forall ity oty  `{ScalarTy ity} `{ScalarTy oty}, (exp ity -> exp oty) -> pol ity oty
-| PProj1 : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, pol (TProd ity1 ity2) ity1
-| PProj2 : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, pol (TProd ity1 ity2) ity2
-| PChoice : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pol ity oty -> pol ity oty -> pol ity oty
-| PConcat : forall ity mty oty  `{ScalarTy ity} `{ScalarTy mty} `{ScalarTy oty},
-    pol ity mty -> pol mty oty -> pol ity oty
-| PSkip : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pol ity oty
-| PFail : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pol ity oty
-| PId : forall ity `{ScalarTy ity}, pol ity ity.
+  (* Test *)
+  | PTest : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pred ity -> pol ity oty -> pol ity oty
+  (* Update *)
+  | PUpd : forall ity oty  `{ScalarTy ity} `{ScalarTy oty}, (exp ity -> exp oty) -> pol ity oty
+  (* TODO: nonfunctional, compiles to nothing *)
+  | PProj1 : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, pol (TProd ity1 ity2) ity1
+  (* TODO: nonfunctional, compiles to nothing *)
+  | PProj2 : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, pol (TProd ity1 ity2) ity2
+  (* Choice *)
+  | PChoice : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pol ity oty -> pol ity oty -> pol ity oty
+  (* Sequential Concatenation *)
+  | PConcat : forall ity mty oty  `{ScalarTy ity} `{ScalarTy mty} `{ScalarTy oty},
+      pol ity mty -> pol mty oty -> pol ity oty
+  (* Skip: compile nothing *)
+  | PSkip : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pol ity oty
+  (* Fail: assign a noop *)
+  | PFail : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pol ity oty
+  (* Identity *)
+  | PId : forall ity `{ScalarTy ity}, pol ity ity.
 
 Record Pol: Type :=
   mkPol {
