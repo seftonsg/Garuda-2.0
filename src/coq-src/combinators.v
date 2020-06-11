@@ -737,7 +737,10 @@ Definition pretty_print_SCF :=
 (* ************************)
 (*  Extraction to Haskell *)
 (* ************************)
-(* run the program 'secjmp.hs' and pipe to a file to get verilog *)
+(* run the program 'secjmp.hs' and pipe to a file to get verilog       *)
+(* Ignore warnings on opacity, see the end of the section on realizing *)
+(* axioms for a proper explanation on why this is safe to do so:       *)
+(* https://coq.inria.fr/refman/addendum/extraction.html?highlight=extraction%20warning#realizing-axioms *)
 Extract Constant main => "Prelude.putStrLn pretty_print_sec_jmp".
 Extraction "secjmp.hs" pretty_print_sec_jmp main.
 Extract Constant main => "Prelude.putStrLn pretty_print_SFI".
