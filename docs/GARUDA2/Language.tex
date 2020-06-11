@@ -181,35 +181,35 @@
               (\emptyset , \emptyset)
               \\ % or null-stream?
             % Identity
-            \interp{ 1 }(\mathit{es}, \mathit{ms})
+            \interp{ 1 }(es, ms)
               \triangleq\ &
-              (\{\mathit{es}\},\{\mathit{ms}\})
+              (\{es\},\{ms\})
               \\
             % Test
-            \interp{ f=n }(\mathit{es}, \mathit{ms})
+            \interp{ f=n }(es, ms)
               \triangleq\ &
-              (\mathsf{filter}\ (f=n)\ \{\mathit{es}\},\
-               \mathsf{filter}\ (f=n)\ \{\mathit{ms}\}) 
+              (\mathsf{filter}\ (f=n)\ \{es\},\
+               \mathsf{filter}\ (f=n)\ \{ms\}) 
               \\
             % Sum
-            \interp{ a + b }(\mathit{es}, \mathit{ms})
+            \interp{ a + b }(es, ms)
               \triangleq\ &
-              \interp { a }(\mathit{es}, \mathit{ms})\cup
-              \interp { b }(\mathit{es}, \mathit{ms}) \\
+              \interp { a }(es, ms)\cup
+              \interp { b }(es, ms) \\
               &\mathsf{where}\ (S_e^1, S_m^1)\cup (S_e^2, S_m^2)\triangleq
                 (S_e^1\cup S_e^2, S_m^1\cup S_m^2)\\
             % Product
-            \interp { a \cdot b }(\mathit{es}, \mathit{ms})
+            \interp { a \cdot b }(es, ms)
               \triangleq\ &
-              \interp { a }(\mathit{es}, \mathit{ms})\cap
-              \interp { b }(\mathit{es}, \mathit{ms}) \\
+              \interp { a }(es, ms)\cap
+              \interp { b }(es, ms) \\
               &\mathsf{where}\ (S_e^1, S_m^1)\cap (S_e^2, S_m^2)\triangleq
                 (S_e^1\cap S_e^2, S_m^1\cap S_m^2)\\
             % Negation
-            \interp { \neg a }(\mathit{es}, \mathit{ms})
+            \interp { \neg a }(es, ms)
               \triangleq\ &
-              \mathsf{let}\ (S_e, S_m) = \interp {a}(\mathit{es}, \mathit{ms}) \\
-              &\mathsf{in}\ (\{\mathit{es}\} - S_e, \{\mathit{ms}\} - S_m)
+              \mathsf{let}\ (S_e, S_m) = \interp {a}(es, ms) \\
+              &\mathsf{in}\ (\{es\} - S_e, \{ms\} - S_m)
               \\
           \end{align*}
           \caption{The semantics of predicates in \sysname.  While predicates remain unchanged from \oldname, the theory changes slightly}
@@ -227,25 +227,25 @@
               & P(\mathbf{Stream}(E))\times P(\mathbf{Stream}(M)) 
               \\
             % Obfuscation
-            \interp {(\Phi_{Encrypt}, \Phi_{Decrypt})}(\mathit{es}, \mathit{ms})\
+            \interp {(\Phi_{Encrypt}, \Phi_{Decrypt})}(es, ms)\
               \triangleq\
               & \mathsf{let}\ (e \rightarrow \obf{e} = \Phi_{Encrypt}),
                             \ (\obf{m} \rightarrow m = \Phi_{Decrypt})\\
               % & \mathsf{let}\ e \rightarrow \obf{e} = \Phi_{Encrypt}\\
               % & \mathsf{and}\ \obf{m} \rightarrow m = \Phi_{Decrypt}\\
               & \mathsf{in}\
-              (\{\mathit{\obf{e}}\}, \{\mathit{m}\})
+              (\{\obf{e}\}, \{m\})
               \\
             % Injection Action
-            \interp { inj_{SR}(o) }(\mathit{es}, \mathit{ms})
+            \interp { inj_{SR}(e) }(es, ms)
               \triangleq\ &
-              (\{\mathit{o : e}\}, \{\mathit{m}\}) 
+              (\{e : es\}, \{ms\}) 
               % or ::?  ;i sequential
               \\
             % Injection Result
-            \interp { inj_{Mi}(i) }(\mathit{es}, \mathit{ms})
+            \interp { inj_{Mi}(m) }(es, ms)
               \triangleq\ &
-              (\{\mathit{es}\},\{ \mathit{i : ms}\})
+              (\{es\},\{m : ms\})
               \\
             % Modification
             \interp { f \leftarrow n }(es, ms)
@@ -254,18 +254,18 @@
                \mathsf{map}\ (f\leftarrow n)\ \{m\})
               \\ %  could use editing?
             % Policy Union
-            \interp { p + q }(\mathit{es}, \mathit{ms})
+            \interp { p + q }(es, ms)
               \triangleq\ &
-              \interp { p }(\mathit{e}, \mathit{m})\cup
-              \interp { q }(\mathit{e}, \mathit{m}) \\
+              \interp { p }(e, m)\cup
+              \interp { q }(e, m) \\
               &\mathsf{where}\ (S_e^1, S_m^1)\cup (S_e^2, S_m^2)\triangleq
                 (S_e^1\cup S_e^2, S_m^1\cup S_m^2)\\
               % A union of the streams gives a nondeterministic machine.
             % Policy Concatnation
-            \interp { p \cdot q }(\mathit{es}, \mathit{ms})
+            \interp { p \cdot q }(es, ms)
               \triangleq\ &
               \mathsf{let}\ (S_e, S_m) = \interp{p}(e, m)\\
-              &\mathsf{in}\ \bigcup \{\interp{q}(\mathit{e}',\mathit{m}')\ |\ \mathit{e}'\in S_e, \mathit{m}'\in S_m\}\\
+              &\mathsf{in}\ \bigcup \{\interp{q}(e',m')\ |\ e'\in S_e, m'\in S_m\}\\
               \\
             % Defn. of Filter
             \interp{\mathsf{filter}\ f}(S)
@@ -338,8 +338,7 @@
         \begin{tabular}{c | l}
           PORT        & DESCRIPTION \\ \hline
           $EXE$       & Direct output of the execution stage. \\
-          $\obf{EXE}$ & Altered execution output. \\
-                      & Input for state register. \\
+          $\obf{EXE}$ & Altered state register input. \\
           $\obf{MEM}$ & Direct output of the state register. \\
           $MEM$       & Altered memory access input. 
         \end{tabular}
