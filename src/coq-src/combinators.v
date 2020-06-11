@@ -150,6 +150,10 @@ Module PolInterp. Section pol_interp.
     end.
 End pol_interp. End PolInterp.
 
+(* *******************************)
+(*  Theorems of general policies *)
+(* *******************************)
+
 Section equations.
 Variable P: Pol.
 
@@ -248,12 +252,19 @@ Proof.
 Qed.
 End equations.
 
-(* Compile Predicates *)
+
+(* ****************************)
+(*  Compilation of Predicates *)
+(* ****************************)
 Fixpoint compile_pred t `{ScalarTy t} (x : id t) (p : pred t) : exp t :=
   match p with
+  (* Binop: Sum, Product *)
   | BPred op pl pr => EBinop op (compile_pred x pl) (compile_pred x pr)
+  (* Falsity *)
   | BZero => EVal (ofromz 0)
+  (* Negation *)
   | BNeg p' => ENot (compile_pred x p')
+  (* Test *)
   | BField f i => 
     let field_val :=
         EBinop
@@ -264,7 +275,10 @@ Fixpoint compile_pred t `{ScalarTy t} (x : id t) (p : pred t) : exp t :=
     in EBinop OEq field_val (EVal i)
   end.
 
-(* State monad *)
+
+(* ****************************)
+(* State Monad (for Policies) *)
+(* ****************************)
 Section M.
   Variable state : Type.
 
@@ -280,6 +294,7 @@ Section M.
 End M.
 
 (* Variables using decimal integers *)
+(* Used to name intermediary registers, wires, etc. *)
 Inductive digit : Type :=
   Zero | One | Two | Three | Four | Five | Six | Seven | Eight | Nine.
 
@@ -327,37 +342,44 @@ Fixpoint nat2decimal_aux (fuel n : nat) (acc : decimal) : decimal :=
       end
   end.
  
- Definition nat2decimal (n : nat) : decimal :=
-   nat2decimal_aux n n nil.
+Definition nat2decimal (n : nat) : decimal :=
+  nat2decimal_aux n n nil.
  
- Definition nat2string (n : nat) : string := decimal2string (nat2decimal n).
+Definition nat2string (n : nat) : string := decimal2string (nat2decimal n).
 
- Definition state := (nat * list string)%type.
+Definition state := (nat * list string)%type.
  
- Definition new_buf : M state string :=
-   fun p =>
-     match p with
-     | (n, l) =>
-       let new_buf := append "internal" (nat2string n) in 
-       ((S n, new_buf::l), new_buf)
-     end.       
+Definition new_buf : M state string :=
+  fun p =>
+    match p with
+    | (n, l) =>
+      let new_buf := append "internal" (nat2string n) in 
+      ((S n, new_buf::l), new_buf)
+    end.       
  
- (* Compile Policies *)
- Fixpoint compile_pol
+(* **************************)
+(*  Compilation of Policies *)
+(* **************************)
+Fixpoint compile_pol
           t1 t2
           `{ScalarTy t1} `{ScalarTy t2}
           (i:id t1) (o:id t2) (p : pol t1 t2) : M state stmt :=
   match p in pol t1 t2 with
+  (* Test *)
   | PTest t1 t2 _ _ test p_cont =>
     let e_test := @compile_pred t1 _ i test
     in bind (@compile_pol t1 t2 _ _ i o p_cont) (fun s_cont =>
        ret (SITE e_test s_cont SSkip))
 
+  (* Update *)
   | PUpd t1 t2 _ _ f => ret (@SAssign t2 _ o (f (@EVar t1 i)))
 
-  | PProj1 t1 t2 _ _ => ret SSkip (*FIXME*)
-  | PProj2 t1 t2 _ _ => ret SSkip (*FIXME*)                                                        
+  (* TODO: nonfunctional, compiles to nothing *)
+  | PProj1 t1 t2 _ _ => ret SSkip (* FIXME *)
+  (* TODO: nonfunctional, compiles to nothing *)
+  | PProj2 t1 t2 _ _ => ret SSkip (* FIXME *)                                                        
 
+  (* Choice *)
   | PChoice t1 t2 _ _ p1 p2 =>
     bind new_buf (fun o_new1 =>
     bind new_buf (fun o_new2 =>                     
@@ -368,20 +390,24 @@ Fixpoint nat2decimal_aux (fuel n : nat) (acc : decimal) : decimal :=
         (SAssign o
           (EBinop OOr (EVar o_new1) (EVar o_new2)))))))))
 
+  (* Sequential Concatenation *)
   | PConcat t1 t2 t3 _ _ _ p1 p2 =>
     bind new_buf (fun m_new_buf =>
     bind (@compile_pol t1 t2 _ _ i m_new_buf p1) (fun s1 =>
     bind (@compile_pol t2 t3 _ _ m_new_buf o p2) (fun s2 => 
     ret (SSeq s1 s2))))
 
+  (* Skip: compile nothing *)
   | PSkip _ _ _ _ => ret SSkip
 
+  (* Fail: assign a noop *)
   | PFail _ _ _ _ => ret (SAssign o (EVal (ofromz 0)))
 
+  (* Identity *)
   | PId _ _ => ret (@SAssign t1 _ o (EVar i))
   end.
 
- Fixpoint compile_bufs (bufs : list string) (p : prog) : prog :=
+Fixpoint compile_bufs (bufs : list string) (p : prog) : prog :=
    match bufs with
    | nil => p
    | x::bufs' => VDecl Local x (ofromz 0) (compile_bufs bufs' p)
