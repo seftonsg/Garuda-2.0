@@ -32,7 +32,7 @@
 %%% BEGIN TITLE PAGE %%%
 %%%%%%%%%%%%%%%%%%%%%%%%
   \title{\sysname}
-  \date{2020\\ Spring}
+  \date{2020\\ Fall}
 
   \author{
     Sage Sefton \\
@@ -102,12 +102,14 @@
             EXE Output Fields & $f_{Eo}$  & $::=$ & $f_{Eo_{1}} \mid \dots \mid f_{Eo_{k}}$\\
             MEM Input Fields  & $f_{Mi}$  & $::=$ & $f_{Mi_{1}} \mid \dots \mid f_{Mi_{k}}$\\
             Fields            & $f$       & $::=$ & $f_{Ei} \mid f_{Eo} \mid f_{Mi} $ \\
-            Instructions      & $i$       & $::=$ & $\{f_{i_{1}} = v_{i_{1}} ,\ \dots\ ,\ f_{i_{k}} = v_{i_{k}}\}$\\
+            Inputs            & $i$       & $::=$ & $\{f_{i_{1}} = v_{i_{1}} ,\ \dots\ ,\ f_{i_{k}} = v_{i_{k}}\}$\\
             Outputs           & $o$       & $::=$ & $\{f_{o_{1}} = v_{o_{1}} ,\ \dots\ ,\ f_{o_{k}} = v_{o_{k}}\}$\\
             Obfuscation Fxn   & $\lambda$ & $::=$ & $f \rightarrow f'$
             % Obfuscation Fxn   & $\mathbf{F}$  & $::=$ & $f \rightarrow f'$
             % TODO: There's got to be something clearer than F, maybe capital gamma, lambda?
-            % TODO: how do we define state in and state out?i
+            % TODO: how do we define state in and state out?
+            % TODO: Mention that Inputs and Outputs can generically refer to either EXE or MEM.
+            %       Indeed, the Outputs refers to both.
           \end{tabular}
           \caption{Definitions in \sysname.}
           \label{fig:spec:synt:defn}
@@ -169,8 +171,8 @@
             % Theory
             \interp{ \cdot }\ 
               :\ \ &
-              \mathbf{Stream}(I)\times \mathbf{Stream}(R) \rightarrow \\
-              & P(\mathbf{Stream}(I))\times P(\mathbf{Stream}(R)) 
+              \mathbf{Stream}(Eo)\times \mathbf{Stream}(Mi) \rightarrow \\
+              & P(\mathbf{Stream}(Eo))\times P(\mathbf{Stream}(Mi)) 
               \\
             % Falsity
             \interp{ 0 }(-, -)
@@ -178,75 +180,81 @@
               (\emptyset , \emptyset)
               \\ % or null-stream?
             % Identity
-            \interp{ 1 }(\mathit{is}, \mathit{rs})
+            \interp{ 1 }(\mathit{os}, \mathit{is})
               \triangleq\ &
-              (\{\mathit{is}\},\{\mathit{rs}\})
+              (\{\mathit{os}\},\{\mathit{is}\})
               \\
             % Test
-            \interp{ f=n }(\mathit{is}, \mathit{rs})
+            \interp{ f=n }(\mathit{os}, \mathit{is})
               \triangleq\ &
-              (\mathsf{filter}\ (f=n)\ \{\mathit{is}\},\
-               \mathsf{filter}\ (f=n)\ \{\mathit{rs}\}) 
+              (\mathsf{filter}\ (f=n)\ \{\mathit{os}\},\
+               \mathsf{filter}\ (f=n)\ \{\mathit{is}\}) 
               \\
             % Sum
-            \interp{ a + b }(\mathit{is}, \mathit{rs})
+            \interp{ a + b }(\mathit{os}, \mathit{is})
               \triangleq\ &
-              \interp { a }(\mathit{is}, \mathit{rs})\cup
-              \interp { b }(\mathit{is}, \mathit{rs}) \\
-              &\mathsf{where}\ (S_i^1, S_r^1)\cup (S_i^2, S_r^2)\triangleq
-                (S_i^1\cup S_i^2, S_r^1\cup S_r^2)\\
+              \interp { a }(\mathit{os}, \mathit{is})\cup
+              \interp { b }(\mathit{os}, \mathit{is}) \\
+              &\mathsf{where}\ (S_o^1, S_i^1)\cup (S_o^2, S_i^2)\triangleq
+                (S_o^1\cup S_o^2, S_i^1\cup S_i^2)\\
             % Product
-            \interp { a \cdot b }(\mathit{is}, \mathit{rs})
+            \interp { a \cdot b }(\mathit{os}, \mathit{is})
               \triangleq\ &
-              \interp { a }(\mathit{is}, \mathit{rs})\cap
-              \interp { b }(\mathit{is}, \mathit{rs}) \\
-              &\mathsf{where}\ (S_i^1, S_r^1)\cap (S_i^2, S_r^2)\triangleq
-                (S_i^1\cap S_i^2, S_r^1\cap S_r^2)\\
+              \interp { a }(\mathit{os}, \mathit{is})\cap
+              \interp { b }(\mathit{os}, \mathit{is}) \\
+              &\mathsf{where}\ (S_o^1, S_i^1)\cap (S_o^2, S_i^2)\triangleq
+                (S_o^1\cap S_o^2, S_i^1\cap S_i^2)\\
             % Negation
-            \interp { \neg a }(\mathit{is}, \mathit{rs})
+            \interp { \neg a }(\mathit{os}, \mathit{os})
               \triangleq\ &
-              \mathsf{let}\ (S_i, S_r) = \interp {a}(\mathit{is}, \mathit{rs}) \\
-              &\mathsf{in}\ (\{\mathit{is}\} - S_i, \{\mathit{rs}\} - S_r)
+              \mathsf{let}\ (S_o, S_i) = \interp {a}(\mathit{os}, \mathit{is}) \\
+              &\mathsf{in}\ (\{\mathit{os}\} - S_o, \{\mathit{is}\} - S_i)
               \\
           \end{align*}
-          \caption{The semantics of predicates in \sysname.}
+          \caption{The semantics of predicates in \sysname.  While predicates remain unchanged from \oldname, the theory changes slightly}
           \label{fig:garuda:sem:pol}
         \end{figure}
 
       \subsubsection{Semantics of Policies}\label{sec:spec:sem:pol}
         \begin{figure}
           \centering
-          \begin{align*}  
+          \begin{align*} 
+            % Theory
+            \interp{ \cdot }\ 
+              :\ \ &
+              \mathbf{Stream}(Eo)\times \mathbf{Stream}(Mi) \rightarrow \\
+              & P(\mathbf{Stream}(Eo))\times P(\mathbf{Stream}(Mi)) 
+              \\ 
             % Injection Action
-            \interp { inj_{i}(i) }(\mathit{is}, \mathit{rs})
+            \interp { inj_{i}(i) }(\mathit{os}, \mathit{is})
               \triangleq\ &
-              (\{\mathit{i : is}\}, \{\mathit{rs}\}) 
+              (\{\mathit{o : os}\}, \{\mathit{is}\}) 
               % or ::?  ; is sequential
               \\
             % Injection Result
-            \interp { inj_{r}(r) }(\mathit{is}, \mathit{rs})
+            \interp { inj_{r}(r) }(\mathit{os}, \mathit{is})
               \triangleq\ &
-              (\{\mathit{is}\},\{ \mathit{r : rs}\})
+              (\{\mathit{os}\},\{ \mathit{i : is}\})
               \\
             % Modification
-            \interp { f \leftarrow n }(is, rs)
+            \interp { f \leftarrow n }(os, is)
               \triangleq\ &
-              (\mathsf{map}\ (f\leftarrow n)\ \{is\},\
-               \mathsf{map}\ (f\leftarrow n)\ \{rs\})
+              (\mathsf{map}\ (f\leftarrow n)\ \{os\},\
+               \mathsf{map}\ (f\leftarrow n)\ \{is\})
               \\ %  could use editing?
             % Policy Union
-            \interp { p + q }(\mathit{is}, \mathit{rs})
+            \interp { p + q }(\mathit{os}, \mathit{is})
               \triangleq\ &
-              \interp { p }(\mathit{is}, \mathit{rs})\cup
-              \interp { q }(\mathit{is}, \mathit{rs}) \\
-              &\mathsf{where}\ (S_i^1, S_r^1)\cup (S_i^2, S_r^2)\triangleq
-                (S_i^1\cup S_i^2, S_r^1\cup S_r^2)\\
+              \interp { p }(\mathit{os}, \mathit{is})\cup
+              \interp { q }(\mathit{os}, \mathit{is}) \\
+              &\mathsf{where}\ (S_o^1, S_i^1)\cup (S_o^2, S_i^2)\triangleq
+                (S_o^1\cup S_o^2, S_i^1\cup S_i^2)\\
               % A union of the streams gives a nondeterministic machine.
             % Policy Concatnation
-            \interp { p \cdot q }(\mathit{is}, \mathit{rs})
+            \interp { p \cdot q }(\mathit{os}, \mathit{is})
               \triangleq\ &
-              \mathsf{let}\ (S_i, S_r) = \interp{p}(is, rs)\\
-              &\mathsf{in}\ \bigcup \{\interp{q}(\mathit{is}',\mathit{rs}')\ |\ \mathit{is}'\in S_i, \mathit{rs'}\in S_r\}\\
+              \mathsf{let}\ (S_o, S_i) = \interp{p}(os, is)\\
+              &\mathsf{in}\ \bigcup \{\interp{q}(\mathit{os}',\mathit{is}')\ |\ \mathit{os}'\in S_o, \mathit{is'}\in S_i\}\\
               \\
             % Defn. of Filter
             \interp{\mathsf{filter}\ f}(S)
