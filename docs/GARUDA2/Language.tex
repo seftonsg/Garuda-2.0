@@ -95,7 +95,7 @@
   %%%%%%%%%%%%%%%%%%%%%%%%%
     \subsection{Syntax}\label{sec:spec:synt}
       \subsubsection{Definitions}\label{sec:spec:synt:defn}
-        %Definitions table
+        % Definitions table
         \begin{figure}
           \centering
           \begin{tabular}{l l c l}
@@ -116,7 +116,7 @@
         \end{figure}
 
       \subsubsection{Syntax of Predicates}\label{sec:spec:synt:pred}
-        %Predicates table
+        % Predicates table
         \begin{figure}
           \centering
           \begin{tabular}{l c r l l}
@@ -132,7 +132,7 @@
         \end{figure}
 
       \subsubsection{Syntax of Policies}\label{sec:spec:synt:pol}
-        %Policies table
+        % Policies table
         \begin{figure}
           \centering
           \begin{tabular}{l c r l l}
@@ -165,7 +165,7 @@
     \subsection{Semantics}\label{sec:spec:sem}
       \subsubsection{Semantics of Predicates}\label{sec:spec:sem:pred}
     
-        %Semantics of Predicates
+        % Semantics of Predicates
         \begin{figure}
           \centering
           \begin{align*}
@@ -299,11 +299,11 @@
       \begin{figure}
         \centering
         \begin{tabular}{l r r l l}
-          %Definitions table
+          % Definitions table
           Values        & $v$     & $::=$     & $\mathsf{INSTR\ |\ RES}$ &\\
           Registers     & $b$     & $::=$     & $\mathsf{reg}$           &\\
           \\
-          %Predicates table
+          % Predicates table
           Expressions & $e$ & $::=$  & $read(b)$       
                             & \textit{Read Reg}\\
                       &     & $\mid$ & $write(b,v)$    
@@ -352,20 +352,20 @@
       \subsubsection{Compiling Predicates}\label{sec:compile:compile:pred}
         \begin{figure}
           \begin{align*}
-            %Falsity
+            % Falsity
             \mathbf{C}[0]\ 
               =\ &
-              let\ E\_bog = \text{new buf}\\
+              let\    E\_bog = \text{new buf}\\
               &\quad\ M\_bog = \text{new buf}\\
               &in\ write(\obf{EXE}, E\_bog)\\
               &\quad  write(MEM, M\_bog)\\
-            Identity
+            % Identity
             \mathbf{C}[1]\ 
               =\ &
               write(\obf{EXE}, read(EXE))\\
               &write(MEM, read(\obf{MEM}))
               \\
-            %Filter
+            % Filter
             \mathbf{C}[f = n]\
               =\
               &if\ EXE=n\ then\\
@@ -374,7 +374,7 @@
               &if\ \obf{MEM}=n\ then\\
               &\quad write(MEM, read(\obf{MEM}))\\
               &\quad else\ \mathbf{C}_{(-, -, \obf{MEM}, MEM)}[0]\\
-            %Predicate Addition
+            % Predicate Addition
             \mathbf{C}[\mathsf{test}(a + b)]\ 
               =\
               & (*Intermediate\ Execution\ Ports*)\\
@@ -386,10 +386,10 @@
               &let\     i_a = \mathbf{C}_{(E_{ai},\obf{E}_{ai},\obf{M}_{ai},M_{ai})}[a]\\
               &\quad\ \ i_b = \mathbf{C}_{(E_{bi},\obf{E}_{bi},\obf{M}_{bi},M_{bi})}[b]\\
               &in\ Mux(i_a\ \ i_b, (\obf{EXE},MEM))\\
-            %Predicate Product
+            % Predicate Product
             \mathbf{C}[\mathsf{test}(a \cdot b)]\ 
               =\ &\mathbf{C}[\mathsf{test}(a) \cdot \mathsf{test}(b)] \\
-            %Predicate Negation
+            % Predicate Negation
             \mathbf{C}[\neg a]\ 
               =\ 
               &if\ \neg a\ then\\
@@ -407,34 +407,34 @@
       \subsubsection{Compiling Policies}\label{sec:compile:compile:pol}
         \begin{figure}
           \begin{align*}
-            %Inject Instruction
+            % Inject Instruction
             \mathbf{C}[inj_{SR}V]\ 
               =\ &
-              write(i_{out}, V)\\
-            %Inject Result
+              write(\obf{EXE}, V)\\
+            % Inject Result
             \mathbf{C}[inj_{Mi}V]\ 
               =\ &
-              write(r_{out}, V)\\
-            %Assignment
+              write(MEM, V)\\
+            % Assignment
             \mathbf{C}[f \leftarrow n]\ 
               =\ &
-              let\ i' = f(read(i_{in}))\\
-              &\quad\ \ r' = f(read(r_{in}))\\
-              &in\ write(i_{out}, i')\\
-              &\quad \ write(r_{out}, r')\\
-            %Policy Nondeterministic Choice
+              let\    e' = f(read(EXE))\\
+              &\quad\ m' = f(read(\obf{MEM}))\\
+              &in\ write(\obf{EXE}, e')\\
+              &\quad \ write(MEM, m')\\
+            % Policy Nondeterministic Choice
             \mathbf{C}[p + q]\ 
               =\ &
-              let\ e_p = \mathbf{C}[p]\\
+              let\      e_p = \mathbf{C}[p]\\
               &\quad\ \ e_q = \mathbf{C}[q]\\
-              &in\ Mux(e_p, e_q, (i_{out},r_{out}))\\
-            %Policy Sequence
+              &in\ Mux(e_p, e_q, (\obf{EXE},MEM))\\
+            % Policy Sequence
             \mathbf{C}[p \cdot q]\ 
               =\ &
-              let\ i_{mid} = \text{new buf}\\
-              &\quad\ \ r_{mid} = \text{new buf}\\
-              &\quad\ \ e_p = \mathbf{C}_{(i_{in}, i_{mid}, r_{in}, r_{mid})}[p]\\
-              &\quad\ \ e_q = \mathbf{C}_{(i_{mid}, i_{out}, r_{mid}, r_{out})}[q]\\
+              let\    EXE_{mid} = \text{new buf}\\
+              &\quad\ MEM_{mid} = \text{new buf}\\
+              &\quad\ \ e_p = \mathbf{C}_{( EXE, EXE_{mid}, \obf{MEM}, MEM_{mid}      )}[p]\\
+              &\quad\ \ e_q = \mathbf{C}_{(      EXE_{mid}, \obf{EXE}, MEM_{mid}, MEM )}[q]\\
               &in\ e_p\ ;\ e_q
           \end{align*}
           \caption{Compilation of \sysname policies into the intermediate language.}
