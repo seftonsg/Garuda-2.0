@@ -25,6 +25,7 @@
   \newcommand\interp[1]{\llbracket #1 \rrbracket}
   \def \sysname {\textsc{GARUDA 2.0}\xspace}
   \def \oldname {\textsc{GARUDA}\xspace}
+  \newcommand\obf[1]{#1^\mathbf{o}}
 
 \begin{document}
 
@@ -102,12 +103,11 @@
             EXE Output Fields & $f_{Eo}$  & $::=$ & $f_{Eo_{1}} \mid \dots \mid f_{Eo_{k}}$\\
             MEM Input Fields  & $f_{Mi}$  & $::=$ & $f_{Mi_{1}} \mid \dots \mid f_{Mi_{k}}$\\
             Fields            & $f$       & $::=$ & $f_{Ei} \mid f_{Eo} \mid f_{Mi} $ \\
-            Inputs            & $i$       & $::=$ & $\{f_{i_{1}} = v_{i_{1}} ,\ \dots\ ,\ f_{i_{k}} = v_{i_{k}}\}$\\
-            Outputs           & $o$       & $::=$ & $\{f_{o_{1}} = v_{o_{1}} ,\ \dots\ ,\ f_{o_{k}} = v_{o_{k}}\}$\\
-            Obfuscation Fxn   & $\Phi$    & $::=$ & $f \rightarrow f'$
-            % Obfuscation Fxn   & $\mathbf{F}$  & $::=$ & $f \rightarrow f'$
-            % TODO: There's got to be something clearer than F, maybe capital gamma, lambda?
-            % TODO: how do we define state in and state out?
+            Obfuscated Field & $\obf{f}$ & $::=$ & $f$\\
+            Inputs           & $i$       & $::=$ & $\{f_{i_{1}} = v_{i_{1}} ,\ \dots\ ,\ f_{i_{k}} = v_{i_{k}}\}$\\
+            Outputs          & $o$       & $::=$ & $\{f_{o_{1}} = v_{o_{1}} ,\ \dots\ ,\ f_{o_{k}} = v_{o_{k}}\}$\\
+            Obfuscation Fxn  & $\Phi$    & $::=$ & $f \rightarrow \obf{f} \mid \obf{f} \rightarrow f$
+            % TODO: how do we define state in and state out? -- Who cares?  that's not part of the language
             % TODO: Mention that Inputs and Outputs can generically refer to either EXE or MEM.
             %       Indeed, the Outputs refers to both.
           \end{tabular}
@@ -138,7 +138,7 @@
           \begin{tabular}{l c r l l}
             Policies  & $p,q$ & $::=$  & $\mathbf{test}(a)$ & \textit{Test}      \\
                       &       & $\mid$ & $(\Phi_{Encrypt}, 
-                                           \Phi_{Decrypt})$ & \textit{Obfuscate} \\
+                                           \Phi_{Decrypt})$ & \textit{Obfuscation} \\
                       &       & $\mid$ & $inj_{Eo}$         & \textit{Injection Execution Output} \\
                       % alternatively: Injection to State Register (inj_{i})
                       &       & $\mid$ & $inj_{Mi}$         & \textit{Injection Memory Input} \\
@@ -170,8 +170,8 @@
             % Theory
             \interp{ \cdot }\ 
               :\ \ &
-              \mathbf{Stream}(Eo)\times \mathbf{Stream}(Mi) \rightarrow \\
-              & P(\mathbf{Stream}(Eo))\times P(\mathbf{Stream}(Mi)) 
+              \mathbf{Stream}(E)\times \mathbf{Stream}(M) \rightarrow \\
+              & P(\mathbf{Stream}(E))\times P(\mathbf{Stream}(M)) 
               \\
             % Falsity
             \interp{ 0 }(-, -)
@@ -179,35 +179,35 @@
               (\emptyset , \emptyset)
               \\ % or null-stream?
             % Identity
-            \interp{ 1 }(\mathit{os}, \mathit{is})
+            \interp{ 1 }(\mathit{es}, \mathit{ms})
               \triangleq\ &
-              (\{\mathit{os}\},\{\mathit{is}\})
+              (\{\mathit{es}\},\{\mathit{ms}\})
               \\
             % Test
-            \interp{ f=n }(\mathit{os}, \mathit{is})
+            \interp{ f=n }(\mathit{es}, \mathit{ms})
               \triangleq\ &
-              (\mathsf{filter}\ (f=n)\ \{\mathit{os}\},\
-               \mathsf{filter}\ (f=n)\ \{\mathit{is}\}) 
+              (\mathsf{filter}\ (f=n)\ \{\mathit{es}\},\
+               \mathsf{filter}\ (f=n)\ \{\mathit{ms}\}) 
               \\
             % Sum
-            \interp{ a + b }(\mathit{os}, \mathit{is})
+            \interp{ a + b }(\mathit{es}, \mathit{ms})
               \triangleq\ &
-              \interp { a }(\mathit{os}, \mathit{is})\cup
-              \interp { b }(\mathit{os}, \mathit{is}) \\
-              &\mathsf{where}\ (S_o^1, S_i^1)\cup (S_o^2, S_i^2)\triangleq
-                (S_o^1\cup S_o^2, S_i^1\cup S_i^2)\\
+              \interp { a }(\mathit{es}, \mathit{ms})\cup
+              \interp { b }(\mathit{es}, \mathit{ms}) \\
+              &\mathsf{where}\ (S_e^1, S_m^1)\cup (S_e^2, S_m^2)\triangleq
+                (S_e^1\cup S_e^2, S_m^1\cup S_m^2)\\
             % Product
-            \interp { a \cdot b }(\mathit{os}, \mathit{is})
+            \interp { a \cdot b }(\mathit{es}, \mathit{ms})
               \triangleq\ &
-              \interp { a }(\mathit{os}, \mathit{is})\cap
-              \interp { b }(\mathit{os}, \mathit{is}) \\
-              &\mathsf{where}\ (S_o^1, S_i^1)\cap (S_o^2, S_i^2)\triangleq
-                (S_o^1\cap S_o^2, S_i^1\cap S_i^2)\\
+              \interp { a }(\mathit{es}, \mathit{ms})\cap
+              \interp { b }(\mathit{es}, \mathit{ms}) \\
+              &\mathsf{where}\ (S_e^1, S_m^1)\cap (S_e^2, S_m^2)\triangleq
+                (S_e^1\cap S_e^2, S_m^1\cap S_m^2)\\
             % Negation
-            \interp { \neg a }(\mathit{os}, \mathit{os})
+            \interp { \neg a }(\mathit{es}, \mathit{ms})
               \triangleq\ &
-              \mathsf{let}\ (S_o, S_i) = \interp {a}(\mathit{os}, \mathit{is}) \\
-              &\mathsf{in}\ (\{\mathit{os}\} - S_o, \{\mathit{is}\} - S_i)
+              \mathsf{let}\ (S_e, S_m) = \interp {a}(\mathit{es}, \mathit{ms}) \\
+              &\mathsf{in}\ (\{\mathit{es}\} - S_e, \{\mathit{ms}\} - S_m)
               \\
           \end{align*}
           \caption{The semantics of predicates in \sysname.  While predicates remain unchanged from \oldname, the theory changes slightly}
@@ -219,51 +219,51 @@
           \centering
           \begin{align*} 
             % Theory
-            \interp{ \cdot }\ 
+            \interp { \cdot }\ 
               :\ \ &
-              \mathbf{Stream}(Eo)\times \mathbf{Stream}(Mi) \rightarrow \\
-              & P(\mathbf{Stream}(Eo))\times P(\mathbf{Stream}(Mi)) 
+              \mathbf{Stream}(E)\times \mathbf{Stream}(M) \rightarrow \\
+              & P(\mathbf{Stream}(E))\times P(\mathbf{Stream}(M)) 
               \\
             % Obfuscation
-            \interp{(\Phi_{Encrypt}, \Phi_{Decrypt})}\
+            \interp {(\Phi_{Encrypt}, \Phi_{Decrypt})}(\mathit{es}, \mathit{ms})\
               \triangleq\
-              & \mathsf{let}\ (os \rightarrow os' = \Phi_{Encrypt}),
-                            \ (is \rightarrow is' = \Phi_{Decrypt})\\
-              % & \mathsf{let}\ os \rightarrow os' = \Phi_{Encrypt}\\
-              % & \mathsf{and}\ is \rightarrow is' = \Phi_{Decrypt}\\
+              & \mathsf{let}\ (e \rightarrow \obf{e} = \Phi_{Encrypt}),
+                            \ (\obf{m} \rightarrow m = \Phi_{Decrypt})\\
+              % & \mathsf{let}\ e \rightarrow \obf{e} = \Phi_{Encrypt}\\
+              % & \mathsf{and}\ \obf{m} \rightarrow m = \Phi_{Decrypt}\\
               & \mathsf{in}\
-              (\{\mathit{os'}\}, \{\mathit{is'}\})
+              (\{\mathit{\obf{e}}\}, \{\mathit{m}\})
               \\
             % Injection Action
             \interp { inj_{Eo}(o) }(\mathit{os}, \mathit{is})
               \triangleq\ &
-              (\{\mathit{o : os}\}, \{\mathit{is}\}) 
-              % or ::?  ; is sequential
+              (\{\mathit{o : e}\}, \{\mathit{m}\}) 
+              % or ::?  ;i sequential
               \\
             % Injection Result
-            \interp { inj_{Mi}(i) }(\mathit{os}, \mathit{is})
+            \interp { inj_{Mi}(i) }(\mathit{es}, \mathit{ms})
               \triangleq\ &
-              (\{\mathit{os}\},\{ \mathit{i : is}\})
+              (\{\mathit{es}\},\{ \mathit{i : ms}\})
               \\
             % Modification
-            \interp { f \leftarrow n }(os, is)
+            \interp { f \leftarrow n }(es, ms)
               \triangleq\ &
-              (\mathsf{map}\ (f\leftarrow n)\ \{os\},\
-               \mathsf{map}\ (f\leftarrow n)\ \{is\})
+              (\mathsf{map}\ (f\leftarrow n)\ \{e\},\
+               \mathsf{map}\ (f\leftarrow n)\ \{m\})
               \\ %  could use editing?
             % Policy Union
-            \interp { p + q }(\mathit{os}, \mathit{is})
+            \interp { p + q }(\mathit{es}, \mathit{ms})
               \triangleq\ &
-              \interp { p }(\mathit{os}, \mathit{is})\cup
-              \interp { q }(\mathit{os}, \mathit{is}) \\
-              &\mathsf{where}\ (S_o^1, S_i^1)\cup (S_o^2, S_i^2)\triangleq
-                (S_o^1\cup S_o^2, S_i^1\cup S_i^2)\\
+              \interp { p }(\mathit{e}, \mathit{m})\cup
+              \interp { q }(\mathit{e}, \mathit{m}) \\
+              &\mathsf{where}\ (S_e^1, S_m^1)\cup (S_e^2, S_m^2)\triangleq
+                (S_e^1\cup S_e^2, S_m^1\cup S_m^2)\\
               % A union of the streams gives a nondeterministic machine.
             % Policy Concatnation
-            \interp { p \cdot q }(\mathit{os}, \mathit{is})
+            \interp { p \cdot q }(\mathit{es}, \mathit{ms})
               \triangleq\ &
-              \mathsf{let}\ (S_o, S_i) = \interp{p}(os, is)\\
-              &\mathsf{in}\ \bigcup \{\interp{q}(\mathit{os}',\mathit{is}')\ |\ \mathit{os}'\in S_o, \mathit{is'}\in S_i\}\\
+              \mathsf{let}\ (S_e, S_m) = \interp{p}(e, m)\\
+              &\mathsf{in}\ \bigcup \{\interp{q}(\mathit{e}',\mathit{m}')\ |\ \mathit{e}'\in S_e, \mathit{m}'\in S_m\}\\
               \\
             % Defn. of Filter
             \interp{\mathsf{filter}\ f}(S)
@@ -329,17 +329,17 @@
       $\mathbf{C}$ operates on the four ports of the \sysname monitor.
       These consist of the processing done after the Execution stage, before the Memory stage, and their respective altered streams.
       Table~\ref{tab:compile:compile:ports} summarizes each port.
-      Assume all $\mathbf{C}$ are short for $\mathbf{C}_{(EXE,EXE',MEM,MEM')}$ if unspecified.
+      Assume all $\mathbf{C}$ are short for $\mathbf{C}_{(EXE,\obf{EXE},\obf{MEM},MEM)}$ if unspecified.
       % Would it be best to flip MEM and MEM' to show the return to the original output of EXE?
       \begin{table}
         \centering
         \begin{tabular}{c | l}
-          PORT   & DESCRIPTION \\ \hline
-          $EXE$  & Direct output of the execution stage. \\
-          $EXE'$ & Altered execution output. \\
-                 & Input for state register. \\
-          $MEM$  & Direct output of the state register. \\
-          $MEM'$ & Altered memory access input. 
+          PORT        & DESCRIPTION \\ \hline
+          $EXE$       & Direct output of the execution stage. \\
+          $\obf{EXE}$ & Altered execution output. \\
+                      & Input for state register. \\
+          $\obf{MEM}$ & Direct output of the state register. \\
+          $MEM$       & Altered memory access input. 
         \end{tabular}
         \caption{
           The four ports used in compilation.
@@ -355,36 +355,36 @@
             \mathbf{C}[0]\ 
               =\ &
               let\ E\_bog = \text{new buf}\\
-              &\quad\ \ M\_bog = \text{new buf}\\
-              &in\ write(EXE', E\_bog)\\
-              &\quad  write(MEM', M\_bog)\\
-            %Identity
+              &\quad\ M\_bog = \text{new buf}\\
+              &in\ write(\obf{EXE}, E\_bog)\\
+              &\quad  write(MEM, M\_bog)\\
+            Identity
             \mathbf{C}[1]\ 
               =\ &
-              write(EXE', read(EXE))\\
-              &write(MEM', read(MEM))
+              write(\obf{EXE}, read(EXE))\\
+              &write(MEM, read(\obf{MEM}))
               \\
             %Filter
             \mathbf{C}[f = n]\
               =\
               &if\ EXE=n\ then\\
-              &\quad write(EXE', read(EXE))\\
-              &\quad else\ \mathbf{C}_{(EXE, EXE', -, -})[0]\\
-              &if\ MEM=n\ then\\
-              &\quad write(MEM', read(MEM))\\
-              &\quad else\ \mathbf{C}_{(-, -, MEM, MEM'})[0]\\
+              &\quad write(\obf{EXE}, read(EXE))\\
+              &\quad else\ \mathbf{C}_{(EXE, \obf{EXE}, -, -)}[0]\\
+              &if\ \obf{MEM}=n\ then\\
+              &\quad write(MEM, read(\obf{MEM}))\\
+              &\quad else\ \mathbf{C}_{(-, -, \obf{MEM}, MEM)}[0]\\
             %Predicate Addition
             \mathbf{C}[\mathsf{test}(a + b)]\ 
               =\
               & (*Intermediate\ Execution\ Ports*)\\
-              & let\ E_{ai}, E'_{ai}, E_{bi}, E'_{bi} = \text{new buf}\ in\\
+              & let\ E_{ai}, \obf{E}_{ai}, E_{bi}, \obf{E}_{bi} = \text{new buf}\ in\\
               & (*Intermediate\ Memory\ Ports*)\\
-              & let\ M_{ai}, M'_{ai}, M_{bi}, M'_{bi} = \text{new buf}\ in\\
+              & let\ \obf{M}_{ai}, M_{ai}, \obf{M}_{bi}, M_{bi} = \text{new buf}\ in\\
               &\quad\ \ DeMux(EXE, E_{ai}, E_{bi})\ ||\\
-              &\quad\ \ DeMux(MEM, M_{ai}, M_{bi})\\
-              &let\     i_a = \mathbf{C}_{(E_{ai},E'_{ai},M_{ai},M'_{ai})}[a]\\
-              &\quad\ \ i_b = \mathbf{C}_{(E_{bi},E'_{bi},M_{bi},M'_{bi})}[b]\\
-              &in\ Mux(i_a\ \ i_b, (EXE',MEM'))\\
+              &\quad\ \ DeMux(\obf{MEM}, \obf{M}_{ai}, \obf{M}_{bi})\\
+              &let\     i_a = \mathbf{C}_{(E_{ai},\obf{E}_{ai},\obf{M}_{ai},M_{ai})}[a]\\
+              &\quad\ \ i_b = \mathbf{C}_{(E_{bi},\obf{E}_{bi},\obf{M}_{bi},M_{bi})}[b]\\
+              &in\ Mux(i_a\ \ i_b, (\obf{EXE},MEM))\\
             %Predicate Product
             \mathbf{C}[\mathsf{test}(a \cdot b)]\ 
               =\ &\mathbf{C}[\mathsf{test}(a) \cdot \mathsf{test}(b)] \\
@@ -392,8 +392,8 @@
             \mathbf{C}[\neg a]\ 
               =\ 
               &if\ \neg a\ then\\
-              &\quad write(EXE', read(EXE))\\
-              &\quad write(MEM', read(MEM))\\
+              &\quad write(\obf{EXE}, read(EXE))\\
+              &\quad write(MEM, read(\obf{MEM}))\\
               &else\ \mathbf{C}[0]\\
           \end{align*}
           \caption{
