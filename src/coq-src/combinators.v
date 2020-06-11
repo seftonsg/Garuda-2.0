@@ -22,8 +22,15 @@ Inductive fld : Type :=
   (*OffsetFld i f: Increase offset of f by i bits. OffsetFld is used primarily 
     to test the high-order bits of particular fields, like EffAddr.*)
   | EffAddr
-  | PC.                                      
+  | PC
+  | Ei
+  | StateReg
+  | Mi
+  | Obf : fld
+  | Phi : fld -> fld.                                      
 
+(* TODO: can Int64 represent larger than "64" for fields and offsets greater than such? *)
+(* I might have to define a much larger type, like Int128 Int256 *)
 Fixpoint offset (f : fld) : Int64.int :=
   match f with
   | OpCode => Int64.repr 26
@@ -34,7 +41,12 @@ Fixpoint offset (f : fld) : Int64.int :=
   | TaintBit off => off
   | OffsetFld i f => Int64.add i (offset f)
   | EffAddr => Int64.repr 32  
-  | PC => Int64.repr 0                             
+  | PC => Int64.repr 0
+  | Ei => Int64.repr 0
+  | StateReg => Int64.repr 0
+  | Mi => Int64.repr 0
+  | Obf => Int64.repr 0
+  | Phi f => offset f
   end.
 
 Fixpoint size (f : fld) : Int64.int :=
@@ -47,7 +59,12 @@ Fixpoint size (f : fld) : Int64.int :=
   | TaintBit _ => Int64.one  (* Taint bits are always size-1 *)
   | OffsetFld _ f => size f
   | EffAddr => Int64.repr 32 
-  | PC => Int64.repr 64                        
+  | PC => Int64.repr 64
+  | Ei => Int64.repr 64
+  | StateReg => Int64.repr 64
+  | Mi => Int64.repr 64
+  | Obf => Int64.repr 64
+  | Phi f => offset f                    
   end.
 
 Inductive pred {t:ty} : Type :=
@@ -67,26 +84,35 @@ Arguments pred t : clear implicits.
 Definition BFieldRange t (f:fld) (i:Int64.int) (v:interp_ty t) : pred t :=
   BField (OffsetFld i f) v.
 
-Inductive pol : ty -> ty -> Type :=
+Inductive sspol : ty -> ty -> Type :=
   (* Test *)
-  | PTest : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pred ity -> pol ity oty -> pol ity oty
+  | PTest : forall ety mty `{ScalarTy ety} `{ScalarTy mty}, pred ety -> sspol ety mty -> sspol ety mty
   (* Update *)
-  | PUpd : forall ity oty  `{ScalarTy ity} `{ScalarTy oty}, (exp ity -> exp oty) -> pol ity oty
+  | PUpd : forall ety mty  `{ScalarTy ety} `{ScalarTy mty}, (exp ety -> exp mty) -> sspol ety mty
+  (* Obfuscation *)
+  | PObf : forall ety mty `{ScalarTy ety} `{ScalarTy mty}, (exp Obf ety -> ety) -> sspol ety mty
   (* TODO: nonfunctional, compiles to nothing *)
-  | PProj1 : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, pol (TProd ity1 ity2) ity1
+  | PProj1 : forall ety1 ety2 `{ScalarTy ety1} `{ScalarTy ety2}, sspol (TProd ety1 ety2) ety1
   (* TODO: nonfunctional, compiles to nothing *)
-  | PProj2 : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, pol (TProd ity1 ity2) ity2
+  | PProj2 : forall ety1 ety2 `{ScalarTy ety1} `{ScalarTy ety2}, sspol (TProd ety1 ety2) ety2
   (* Choice *)
-  | PChoice : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pol ity oty -> pol ity oty -> pol ity oty
+  | PChoice : forall ety mty `{ScalarTy ety} `{ScalarTy mty}, 
+              sspol ety mty -> sspol ety mty -> sspol ety mty
   (* Sequential Concatenation *)
-  | PConcat : forall ity mty oty  `{ScalarTy ity} `{ScalarTy mty} `{ScalarTy oty},
-      pol ity mty -> pol mty oty -> pol ity oty
+  | PConcat : forall ety ity mty  `{ScalarTy ety} `{ScalarTy ity} `{ScalarTy mty},
+              sspol ety ity -> sspol ity mty -> sspol ety mty
   (* Skip: compile nothing *)
-  | PSkip : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pol ity oty
+  | PSkip : forall ety mty `{ScalarTy ety} `{ScalarTy mty}, sspol ety mty
   (* Fail: assign a noop *)
-  | PFail : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pol ity oty
+  | PFail : forall ety mty `{ScalarTy ety} `{ScalarTy mty}, sspol ety mty
   (* Identity *)
-  | PId : forall ity `{ScalarTy ity}, pol ity ity.
+  | PId : forall ety `{ScalarTy ety}, sspol ety ety.
+
+Inductive dspol : (ty -> ty) -> (ty -> ty) -> Type :=
+  (* Split into two single-stream policies *)
+  | DPSplit : forall etys mtys,
+             (*`{ScalarTy ety} `{ScalarTy eoty} `{ScalarTy moty} `{ScalarTy mty},*)
+             sspol etys -> sspol moty mty -> dspol etys mtys.
 
 Record Pol: Type :=
   mkPol {

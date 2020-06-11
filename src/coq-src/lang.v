@@ -133,7 +133,11 @@ Inductive binop : Type :=
 | OOr (* or*)
 | OSubu (* unsigned sub *)
 | OEq (* equality *)
-| OLt (* less than *).    
+| OLt (* less than *).
+
+Inductive obfop : Type :=
+| ObfopNone(* no change*)
+| ObfopSome (b : binop) (o : obfop). (* A recursive chain of binops *)
 
 Class ScalarTy (t:ty) : Type :=
   mkScalarTy {
@@ -228,6 +232,7 @@ Inductive exp : ty -> Type :=
   | EVar : forall t, id t -> exp t
   | EDeref : forall N t (i : iN N), id (TArr N t) -> exp t
   | EBinop : forall t `{ScalarTy t}, binop -> exp t -> exp t -> exp t
+  | EObf : forall t `{ScalarTy t}, obf -> exp t -> exp t -> exp t (* Would this be single arg? i.e. obf -> exp t -> exp t *)
   | ENot : forall t `{ScalarTy t}, exp t -> exp t
   | EProj1 : forall t1 t2 `{ScalarTy t1} `{ScalarTy t2}, exp (TProd t1 t2) -> exp t1
   | EProj2 : forall t1 t2 `{ScalarTy t1} `{ScalarTy t2}, exp (TProd t1 t2) -> exp t2.                 
