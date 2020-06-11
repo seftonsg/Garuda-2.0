@@ -97,11 +97,17 @@ Record Pol: Type :=
 
 Fixpoint pred_interp t `{ScalarTy t} (e : pred t) : interp_ty t -> Prop :=
   match e with 
+  (* Product *)
   | BPred OAnd e1 e2 => fun v => pred_interp e1 v /\ pred_interp e2 v
+  (* Sum *)
   | BPred OOr e1 e2 => fun v => pred_interp e1 v \/ pred_interp e2 v
+  (* catch other binops *)
   | BPred _ _ _ => fun _ => False (*other binops are nonboolean*)
+  (* Falsity *)
   | BZero => fun _ => False
+  (* Negation *)
   | BNeg e2 => fun v => not (pred_interp e2 v)
+  (* Test *) (* TODO: double check *)
   | BField f i => fun v =>
                     oiszero
                       (obinop OEq
@@ -121,16 +127,25 @@ Module PolInterp. Section pol_interp.
   Fixpoint pol_interp {ity oty} `{ScalarTy ity} `{ScalarTy oty}
            (p: pol ity oty) : interp_ty ity -> interp_ty oty -> Prop :=
     match p with
-    | PTest _ _ _ _ e p2 => fun v_in v_out => pred_interp e v_in /\ pol_interp p2 v_in v_out 
+    (* Test *)
+    | PTest _ _ _ _ e p2 => fun v_in v_out => pred_interp e v_in /\ pol_interp p2 v_in v_out
+    (* Update *)
     | PUpd _ _ _ _ f => fun v_in v_out => exp_interp s (f (EVal v_in)) = v_out
+    (* TODO: nonfunctional, compiles to nothing *)
     | PProj1 _ _ _ _ => fun v_in v_out => fst v_in = v_out
-    | PProj2 _ _ _ _ => fun v_in v_out => snd v_in = v_out                                                   
+    (* TODO: nonfunctional, compiles to nothing *)
+    | PProj2 _ _ _ _ => fun v_in v_out => snd v_in = v_out
+    (* Choice *)                                           
     | PChoice _ _ _ _ p1 p2 => fun v_in v_out => pol_interp p1 v_in v_out \/ pol_interp p2 v_in v_out
+    (* Sequential Concatenation *)
     | PConcat ity mty oty _ _ _ p1 p2 => fun v_in v_out =>
                              exists v_int:interp_ty mty,
                                pol_interp p1 v_in v_int /\ pol_interp p2 v_int v_out
+    (* Skip: compile nothing *)
     | PSkip _ _ _ _ => fun v_in v_out => True
+    (* Fail: assign a noop *)
     | PFail _ _ _ _ => fun v_in v_out => False
+    (* Identity *)
     | PId _ _ => fun v_in v_out => v_out = v_in
     end.
 End pol_interp. End PolInterp.
