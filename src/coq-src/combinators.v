@@ -84,41 +84,41 @@ Arguments pred t : clear implicits.
 Definition BFieldRange t (f:fld) (i:Int64.int) (v:interp_ty t) : pred t :=
   BField (OffsetFld i f) v.
 
-Inductive sspol : ty -> ty -> Type :=
+Inductive pol : ty -> ty -> Type :=
   (* Test *)
-  | PTest : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pred ity -> sspol ity oty -> sspol ity oty
+  | PTest : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pred ity -> pol ity oty -> pol ity oty
   (* Update *)
-  | PUpd : forall ity oty  `{ScalarTy ity} `{ScalarTy oty}, (exp ity -> exp oty) -> sspol ity oty
+  | PUpd : forall ity oty  `{ScalarTy ity} `{ScalarTy oty}, (exp ity -> exp oty) -> pol ity oty
   (* Obfuscation *)
-  | PPhi : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, (exp ity -> exp oty) -> sspol ity oty
+  | PPhi : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, (exp ity -> exp oty) -> pol ity oty
   (* TODO: nonfunctional, compiles to nothing *)
-  | PProj1 : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, sspol (TProd ity1 ity2) ity1
+  | PProj1 : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, pol (TProd ity1 ity2) ity1
   (* TODO: nonfunctional, compiles to nothing *)
-  | PProj2 : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, sspol (TProd ity1 ity2) ity2
+  | PProj2 : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, pol (TProd ity1 ity2) ity2
   (* Choice *)
   | PChoice : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, 
-              sspol ity oty -> sspol ity oty -> sspol ity oty
+              pol ity oty -> pol ity oty -> pol ity oty
   (* Sequential Concatenation *)
   | PConcat : forall ity ety oty  `{ScalarTy ity} `{ScalarTy ety} `{ScalarTy oty},
-              sspol ity ety -> sspol ety oty -> sspol ity oty
+              pol ity ety -> pol ety oty -> pol ity oty
   (* Skip: compile nothing *)
-  | PSkip : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, sspol ity oty
+  | PSkip : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pol ity oty
   (* Fail: assign a noop *)
-  | PFail : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, sspol ity oty
+  | PFail : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pol ity oty
   (* Identity *)
-  | PId : forall ity `{ScalarTy ity}, sspol ity ity.
+  | PId : forall ity `{ScalarTy ity}, pol ity ity.
 
-Inductive dspol : ty -> ty -> ty -> ty -> Type :=
+Inductive dpol : ty -> ty -> ty -> ty -> Type :=
   (* Split into two single-stream policies *)
   | DPSplit : forall ety eoty moty mty
              `{ScalarTy ety} `{ScalarTy eoty} `{ScalarTy moty} `{ScalarTy mty},
-             sspol ety eoty -> sspol moty mty -> dspol ety eoty moty mty.
+             pol ety eoty -> pol moty mty -> dpol ety eoty moty mty.
 
-Record SPol: Type :=
-  mkSPol {
+Record Pol: Type :=
+  mkPol {
       ity: ty; ity_ScalarTy: `{ScalarTy ity};
       oty: ty; oty_ScalarTy: `{ScalarTy oty};
-      the_Spol: sspol ity oty
+      the_pol: pol ity oty
     }.
 
 Record DPol: Type :=
@@ -127,7 +127,7 @@ Record DPol: Type :=
       eoty: ty; eoty_ScalarTy: `{ScalarTy eoty};
       moty: ty; moty_ScalarTy: `{ScalarTy moty};
       mty:  ty;  mty_ScalarTy: `{ScalarTy  mty};
-      the_Dpol: dspol ety eoty moty mty
+      the_Dpol: dpol ety eoty moty mty
     }.
 
 Fixpoint pred_interp t `{ScalarTy t} (e : pred t) : interp_ty t -> Prop :=
@@ -166,6 +166,9 @@ Module PolInterp. Section pol_interp.
     | PTest _ _ _ _ e p2 => fun v_in v_out => pred_interp e v_in /\ pol_interp p2 v_in v_out
     (* Update *)
     | PUpd _ _ _ _ f => fun v_in v_out => exp_interp s (f (EVal v_in)) = v_out
+    (* Phi *)
+    | PPhi _ _ _ _ p' => fun v_in v_out => exp_interp s (p' (EVal v_in)) = v_out
+    (*| PPhi _ _ _ _ _ => fun v_in v_out => False*)
     (* TODO: nonfunctional, compiles to nothing *)
     | PProj1 _ _ _ _ => fun v_in v_out => fst v_in = v_out
     (* TODO: nonfunctional, compiles to nothing *)
@@ -190,7 +193,8 @@ End pol_interp. End PolInterp.
 (* *******************************)
 
 Section equations.
-Variable P: Pol.
+Variable  P:  Pol.
+Variable DP: DPol.
 
 Notation ity := P.(ity).
 Notation oty := P.(oty).
