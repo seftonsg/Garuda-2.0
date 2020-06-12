@@ -127,18 +127,22 @@ Definition id (t : ty) := string.
 Inductive binop : Type :=
 | OAnd (* and *)
 | OXor (* xor *)
+| OOr  (*  or *)
+| OShr  (* (signed) shift right *)
+| OShru (* unsigned shift right *)
+| OShl  (*          shift left  *)
 | OAddu (* unsigned add *)
-| OShr (* shift right *) | OShru (* unsigned shift right *)
-| OShl (* shift left *)
-| OOr (* or*)
 | OSubu (* unsigned sub *)
-| OEq (* equality *)
-| OLt (* less than *).
+| OEq  (* equality *)
+| OLt  (* less than *).
 
-Inductive obfop : Type :=
-| ObfopNone(* no change*)
-| ObfopSome (b : binop) (o : obfop). (* A recursive chain of binops *)
+Inductive phiop : Type :=
+| OPhiNone (* no change*)
+| OPhiSome (p : phiop) (b : binop). (* A recursive chain of binops *)
 
+(* ***************************************)
+(*  Coercions from Inductive to Function *)
+(* ***************************************)
 Class ScalarTy (t:ty) : Type :=
   mkScalarTy {
       oiszero : interp_ty t -> bool;
@@ -146,8 +150,10 @@ Class ScalarTy (t:ty) : Type :=
       ofromz : Z -> interp_ty t;
       onot : interp_ty t -> interp_ty t;
       obinop : binop -> interp_ty t -> interp_ty t -> interp_ty t;
+      ophiop : phiop -> binop -> interp_ty t -> interp_ty t;
     }.
 
+(*  Bit Type Coercions *)
 Instance Bit_ScalarTy : ScalarTy TBit :=
   mkScalarTy
     (fun b:interp_ty TBit => b)
@@ -155,19 +161,25 @@ Instance Bit_ScalarTy : ScalarTy TBit :=
     (fun z:Z => if Z.eq_dec z 0 then false else true)
     (fun b:interp_ty TBit => negb b)
     (fun o =>
-       match o with
-       | OAnd => andb
-       | OXor => xorb
-       | OAddu => xorb 
-       | OShr => fun _ _ => false (*unsupported*)
-       | OShru => fun _ _ => false (*unsupported*)
-       | OShl => fun _ _ => false (*unsupported*)
-       | OOr => orb
-       | OSubu => fun _ _ => false (*unsupported*)
-       | OEq => fun b1 b2 => negb (xorb b1 b2)
-       | OLt => fun b1 b2 => andb (negb b1) b2
-       end).
+      match o with
+      | OAnd => andb
+      | OXor => xorb
+      | OOr => orb
+      | OShr => fun _ _ => false  (*unsupported*)
+      | OShru => fun _ _ => false (*unsupported*)
+      | OShl => fun _ _ => false  (*unsupported*)
+      | OAddu => xorb
+      | OSubu => fun _ _ => false (*unsupported*)
+      | OEq => fun b1 b2 => negb (xorb b1 b2)
+      | OLt => fun b1 b2 => andb (negb b1) b2
+      end)
+    (fun p =>
+      match p with
+      | OPhiNone => fun _ x => x
+      | OPhiSome p' b => fun p' b => b
+      end).
 
+(*  Int32 Type Coercions *)
 Instance Int32_ScalarTy : ScalarTy TVec32 :=
   mkScalarTy
     (fun i:interp_ty TVec32 => Int.eq i Int.zero)
@@ -175,19 +187,25 @@ Instance Int32_ScalarTy : ScalarTy TVec32 :=
     Int.repr    
     (fun i:interp_ty TVec32 => Int.not i)
     (fun b =>
-       match b with
-       | OAnd => Int.and
-       | OXor => Int.xor
-       | OAddu => Int.add
-       | OShr => Int.shr
-       | OShru => Int.shru
-       | OShl => Int.shl
-       | OOr => Int.or
-       | OSubu => Int.sub
-       | OEq => fun v1 v2 => if Int.eq v1 v2 then Int.one else Int.zero
-       | OLt => fun v1 v2 => if Int.lt v1 v2 then Int.one else Int.zero
-       end).
+      match b with
+      | OAnd => Int.and
+      | OXor => Int.xor
+      | OAddu => Int.add
+      | OShr => Int.shr
+      | OShru => Int.shru
+      | OShl => Int.shl
+      | OOr => Int.or
+      | OSubu => Int.sub
+      | OEq => fun v1 v2 => if Int.eq v1 v2 then Int.one else Int.zero
+      | OLt => fun v1 v2 => if Int.lt v1 v2 then Int.one else Int.zero
+      end)
+    (fun p => 
+      match p with
+      | OPhiNone => fun _ x => x
+      | OPhiSome p' b => fun p' b => b
+    end).
 
+(*  Int64 Type Coercions *)
 Instance Int64_ScalarTy : ScalarTy TVec64 :=
   mkScalarTy
     (fun i:interp_ty TVec64 => Int64.eq i Int64.zero)
@@ -195,47 +213,61 @@ Instance Int64_ScalarTy : ScalarTy TVec64 :=
     Int64.repr    
     (fun i:interp_ty TVec64 => Int64.not i)
     (fun b =>
-       match b with
-       | OAnd => Int64.and
-       | OXor => Int64.xor
-       | OAddu => Int64.add
-       | OShr => Int64.shr
-       | OShru => Int64.shru
-       | OShl => Int64.shl
-       | OOr => Int64.or
-       | OSubu => Int64.sub
-       | OEq => fun v1 v2 => if Int64.eq v1 v2 then Int64.one else Int64.zero
-       | OLt => fun v1 v2 => if Int64.lt v1 v2 then Int64.one else Int64.zero       
-       end).
+      match b with
+      | OAnd => Int64.and
+      | OXor => Int64.xor
+      | OAddu => Int64.add
+      | OShr => Int64.shr
+      | OShru => Int64.shru
+      | OShl => Int64.shl
+      | OOr => Int64.or
+      | OSubu => Int64.sub
+      | OEq => fun v1 v2 => if Int64.eq v1 v2 then Int64.one else Int64.zero
+      | OLt => fun v1 v2 => if Int64.lt v1 v2 then Int64.one else Int64.zero       
+      end)
+    (fun p => 
+      match p with
+      | OPhiNone => fun _ x => x
+      | OPhiSome p' b => fun p' b => b
+    end).
 
+(*  Prod (Pair) Type Coercions *)
 Instance TProd_ScalarTy {t1 t2} `{ScalarTy t1} `{ScalarTy t2} : ScalarTy (TProd t1 t2) := 
   mkScalarTy
     (fun p:interp_ty (TProd t1 t2) => andb (oiszero (fst p)) (oiszero (snd p)))
     (fun p:interp_ty (TProd t1 t2) => 0%Z)
     (fun z => (ofromz z, ofromz z))
     (fun p:interp_ty (TProd t1 t2) => (onot (fst p), onot (snd p)))
-    (fun b (p1 p2:interp_ty (TProd t1 t2)) => (obinop b (fst p1) (fst p2), obinop b (snd p1) (snd p2))).
-
+    (fun b (p1 p2:interp_ty (TProd t1 t2)) => (obinop b (fst p1) (fst p2), obinop b (snd p1) (snd p2)))
+    (fun P b (pr:interp_ty (TProd t1 t2)) => (ophiop P b (fst pr), ophiop P b (snd pr))).
+    
 Definition arr_iszero {n t} `{ScalarTy t} (a: interp_ty (TArr n t)): bool :=
   fold_left (fun b x => andb b (oiszero x)) true a.
 
+(*  Array Type Coercions *)
 Instance TArr_ScalarTy {n t} `{ScalarTy t} : ScalarTy (TArr n t) :=
   mkScalarTy
     (fun a:interp_ty (TArr n t) => fold_left (fun b x => andb b (oiszero x)) true a)
     (fun a:interp_ty (TArr n t) => fold_left (fun z x => (otoz x * z)%Z) 1%Z a)
     (fun z => const (ofromz z) n)
     (fun a:interp_ty (TArr n t) => map onot a)
-    (fun b (a1 a2:interp_ty (TArr n t)) => map2 (fun x y => obinop b x y) a1 a2).
+    (fun b (a1 a2:interp_ty (TArr n t))
+      => map2 (fun x y => obinop b x y) a1 a2)
+    (fun P b   (a:interp_ty (TArr n t))
+      => (map (fun x => ophiop P b x) a)).
 
+(* ****************************)
+(*  Definition of Expressions *)
+(* ****************************)
 Inductive exp : ty -> Type :=
   | EVal : forall t `{ScalarTy t}, interp_ty t -> exp t
   | EVar : forall t, id t -> exp t
   | EDeref : forall N t (i : iN N), id (TArr N t) -> exp t
   | EBinop : forall t `{ScalarTy t}, binop -> exp t -> exp t -> exp t
-  | EObf : forall t `{ScalarTy t}, obf -> exp t -> exp t -> exp t (* Would this be single arg? i.e. obf -> exp t -> exp t *)
+  | EPhiop : forall t `{ScalarTy t}, phiop -> exp t -> exp t (* Would this be single arg? i.e. obf -> exp t -> exp t *)
   | ENot : forall t `{ScalarTy t}, exp t -> exp t
   | EProj1 : forall t1 t2 `{ScalarTy t1} `{ScalarTy t2}, exp (TProd t1 t2) -> exp t1
-  | EProj2 : forall t1 t2 `{ScalarTy t1} `{ScalarTy t2}, exp (TProd t1 t2) -> exp t2.                 
+  | EProj2 : forall t1 t2 `{ScalarTy t1} `{ScalarTy t2}, exp (TProd t1 t2) -> exp t2.
 
 Definition cast_exp (t1 t2: ty) (H:t1=t2): exp t1 -> exp t2 :=
   fun e:exp t1 =>
@@ -281,6 +313,12 @@ Inductive prog : Type :=
 
 Definition binop_interp t `{ScalarTy t} (op : binop) (v1 v2 : interp_ty t) : interp_ty t :=
   obinop op v1 v2.
+
+Definition phiop_interp t `{ScalarTy t} (p : phiop) (v : interp_ty t) : interp_ty t :=
+  match p with
+  | OPhiNone => v
+  | OPhiSome _ b  => ophiop p b v
+  end.
 
 Section state.
   Definition state := forall t, id t -> interp_ty t.
@@ -344,7 +382,7 @@ End state.
 Section exp_interp.
   Variable s : forall t, id t -> interp_ty t.
   
- Fixpoint exp_interp t `{ScalarTy t} (e : exp t) : interp_ty t := 
+  Fixpoint exp_interp t `{ScalarTy t} (e : exp t) : interp_ty t := 
     match e as e' in exp t return interp_ty t with 
     | EVal _ _ v => v
     | EVar _ x => s x
@@ -353,9 +391,12 @@ Section exp_interp.
       let v1 := exp_interp e1 in
       let v2 := exp_interp e2 in
       binop_interp op v1 v2
+    | EPhiop _ _ p e =>
+      let v := exp_interp e in
+      phiop_interp p v
     | ENot _ _ e' => onot (exp_interp e')
     | EProj1 _ _ _ _ e' => fst (exp_interp e')
-    | EProj2 _ _ _ _ e' => snd (exp_interp e')                           
+    | EProj2 _ _ _ _ e' => snd (exp_interp e')                    
     end.
 End exp_interp.
 
