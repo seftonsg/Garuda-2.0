@@ -89,7 +89,7 @@ Inductive pol : ty -> ty -> Type :=
   | PTest : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pred ity -> pol ity oty -> pol ity oty
   (* Update *)
   | PUpd : forall ity oty  `{ScalarTy ity} `{ScalarTy oty}, (exp ity -> exp oty) -> pol ity oty
-  (* Obfuscation *)
+  (* Phi Obfuscation *)
   | PPhi : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, (exp ity -> exp oty) -> pol ity oty
   (* TODO: nonfunctional, compiles to nothing *)
   | PProj1 : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, pol (TProd ity1 ity2) ity1
@@ -166,7 +166,7 @@ Module PolInterp. Section pol_interp.
     | PTest _ _ _ _ e p2 => fun v_in v_out => pred_interp e v_in /\ pol_interp p2 v_in v_out
     (* Update *)
     | PUpd _ _ _ _ f => fun v_in v_out => exp_interp s (f (EVal v_in)) = v_out
-    (* Phi *)
+    (* Phi Obfuscate *)
     | PPhi _ _ _ _ p' => fun v_in v_out => exp_interp s (p' (EVal v_in)) = v_out
     (*| PPhi _ _ _ _ _ => fun v_in v_out => False*)
     (* TODO: nonfunctional, compiles to nothing *)
@@ -412,6 +412,9 @@ Fixpoint compile_pol
 
   (* Update *)
   | PUpd t1 t2 _ _ f => ret (@SAssign t2 _ o (f (@EVar t1 i)))
+
+  (* Phi Obfuscation *)
+  | PPhi t1 t2 _ _ p => ret (@SAssign t2 _ o (p (@EVar t1 i)))
 
   (* TODO: nonfunctional, compiles to nothing *)
   | PProj1 t1 t2 _ _ => ret SSkip (* FIXME *)
