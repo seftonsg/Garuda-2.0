@@ -86,39 +86,48 @@ Definition BFieldRange t (f:fld) (i:Int64.int) (v:interp_ty t) : pred t :=
 
 Inductive sspol : ty -> ty -> Type :=
   (* Test *)
-  | PTest : forall ety mty `{ScalarTy ety} `{ScalarTy mty}, pred ety -> sspol ety mty -> sspol ety mty
+  | PTest : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pred ity -> sspol ity oty -> sspol ity oty
   (* Update *)
-  | PUpd : forall ety mty  `{ScalarTy ety} `{ScalarTy mty}, (exp ety -> exp mty) -> sspol ety mty
+  | PUpd : forall ity oty  `{ScalarTy ity} `{ScalarTy oty}, (exp ity -> exp oty) -> sspol ity oty
   (* Obfuscation *)
-  | PObf : forall ety mty `{ScalarTy ety} `{ScalarTy mty}, (exp Obf ety -> ety) -> sspol ety mty
+  | PPhi : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, (exp ity -> exp oty) -> sspol ity oty
   (* TODO: nonfunctional, compiles to nothing *)
-  | PProj1 : forall ety1 ety2 `{ScalarTy ety1} `{ScalarTy ety2}, sspol (TProd ety1 ety2) ety1
+  | PProj1 : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, sspol (TProd ity1 ity2) ity1
   (* TODO: nonfunctional, compiles to nothing *)
-  | PProj2 : forall ety1 ety2 `{ScalarTy ety1} `{ScalarTy ety2}, sspol (TProd ety1 ety2) ety2
+  | PProj2 : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, sspol (TProd ity1 ity2) ity2
   (* Choice *)
-  | PChoice : forall ety mty `{ScalarTy ety} `{ScalarTy mty}, 
-              sspol ety mty -> sspol ety mty -> sspol ety mty
+  | PChoice : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, 
+              sspol ity oty -> sspol ity oty -> sspol ity oty
   (* Sequential Concatenation *)
-  | PConcat : forall ety ity mty  `{ScalarTy ety} `{ScalarTy ity} `{ScalarTy mty},
-              sspol ety ity -> sspol ity mty -> sspol ety mty
+  | PConcat : forall ity ety oty  `{ScalarTy ity} `{ScalarTy ety} `{ScalarTy oty},
+              sspol ity ety -> sspol ety oty -> sspol ity oty
   (* Skip: compile nothing *)
-  | PSkip : forall ety mty `{ScalarTy ety} `{ScalarTy mty}, sspol ety mty
+  | PSkip : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, sspol ity oty
   (* Fail: assign a noop *)
-  | PFail : forall ety mty `{ScalarTy ety} `{ScalarTy mty}, sspol ety mty
+  | PFail : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, sspol ity oty
   (* Identity *)
-  | PId : forall ety `{ScalarTy ety}, sspol ety ety.
+  | PId : forall ity `{ScalarTy ity}, sspol ity ity.
 
-Inductive dspol : (ty -> ty) -> (ty -> ty) -> Type :=
+Inductive dspol : ty -> ty -> ty -> ty -> Type :=
   (* Split into two single-stream policies *)
-  | DPSplit : forall etys mtys,
-             (*`{ScalarTy ety} `{ScalarTy eoty} `{ScalarTy moty} `{ScalarTy mty},*)
-             sspol etys -> sspol moty mty -> dspol etys mtys.
+  | DPSplit : forall ety eoty moty mty
+             `{ScalarTy ety} `{ScalarTy eoty} `{ScalarTy moty} `{ScalarTy mty},
+             sspol ety eoty -> sspol moty mty -> dspol ety eoty moty mty.
 
-Record Pol: Type :=
-  mkPol {
+Record SPol: Type :=
+  mkSPol {
       ity: ty; ity_ScalarTy: `{ScalarTy ity};
       oty: ty; oty_ScalarTy: `{ScalarTy oty};
-      the_pol: pol ity oty
+      the_Spol: sspol ity oty
+    }.
+
+Record DPol: Type :=
+  mkDPol {
+      ety:  ty;  ety_ScalarTy: `{ScalarTy  ety};
+      eoty: ty; eoty_ScalarTy: `{ScalarTy eoty};
+      moty: ty; moty_ScalarTy: `{ScalarTy moty};
+      mty:  ty;  mty_ScalarTy: `{ScalarTy  mty};
+      the_Dpol: dspol ety eoty moty mty
     }.
 
 Fixpoint pred_interp t `{ScalarTy t} (e : pred t) : interp_ty t -> Prop :=
