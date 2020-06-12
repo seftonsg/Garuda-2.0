@@ -26,8 +26,9 @@ Inductive fld : Type :=
   | Ei
   | StateReg
   | Mi
-  | Obf : fld
-  | Phi : fld -> fld.                                      
+  | Obf : fld -> fld
+  (*| Phi : fld -> fld*)
+  .
 
 (* TODO: can Int64 represent larger than "64" for fields and offsets greater than such? *)
 (* I might have to define a much larger type, like Int128 Int256 *)
@@ -45,8 +46,8 @@ Fixpoint offset (f : fld) : Int64.int :=
   | Ei => Int64.repr 0
   | StateReg => Int64.repr 0
   | Mi => Int64.repr 0
-  | Obf => Int64.repr 0
-  | Phi f => offset f
+  | Obf f => offset f
+  (*| Phi f => offset f*)
   end.
 
 Fixpoint size (f : fld) : Int64.int :=
@@ -56,15 +57,15 @@ Fixpoint size (f : fld) : Int64.int :=
   | Format => Int64.repr 5
   | Rt => Int64.repr 5
   | ImmAddr => Int64.repr 26
-  | TaintBit _ => Int64.one  (* Taint bits are always size-1 *)
+  | TaintBit _ => Int64.one  (* Taint bits are always size 1 *)
   | OffsetFld _ f => size f
   | EffAddr => Int64.repr 32 
   | PC => Int64.repr 64
   | Ei => Int64.repr 64
   | StateReg => Int64.repr 64
   | Mi => Int64.repr 64
-  | Obf => Int64.repr 64
-  | Phi f => offset f                    
+  | Obf f => size f
+  (*| Phi f => size f*)
   end.
 
 Inductive pred {t:ty} : Type :=
@@ -735,6 +736,22 @@ Section taint.
             end).
 End taint.
 
+Section noObf.
+  (* Main Streams *)
+    (* E Stream *)
+    (* EffAddr - 64 *)
+    Definition noObf_E := TArr (128)%nat TBit.
+    (* M Stream *)
+    Definition noObf_M := TArr (128)%nat TBit.
+  (* EffAddr *)
+  Definition noObf_ea  := EffAddr.
+  Definition noObf_eaO := Obf noObf_ea.
+  (*Definition (ea : fld) := ea -> ea -> Phi.*)
+
+  Definition noObf: pol noObf_E noObf_M := PId.
+
+End noObf.
+
 (* *********************)
 (*  Print the Programs *)
 (* *********************)
@@ -747,13 +764,19 @@ Definition i : id TVec64 := "i".
 Definition o : id TVec64 := "o".
 Definition ri : id TVec64 := "ri".
 Definition ro : id TVec64 := "ro".
+(* These don't really mean anything: *)
+(*
+Definition Es : id TVec64 := "Es".
+Definition Eos : id TVec64 := "Eos".
+Definition Mos : id TVec64 := "Mos".
+Definition Ms : id TVec64 := "Ms".
+*)
 
 (* ***********************)
 (*  Define Pols Compiled *)
 (* ********** *************)
 Definition sec_jmp_compiled : prog := compile i o sec_jmp.
 Definition SFI_compiled : prog := compile ri ro sfi.
-
 Definition sec_jmp_sfi : prog := compile i o (PConcat sec_jmp sfi).
 Opaque sec_jmp.
 Opaque sfi.
@@ -763,6 +786,10 @@ Definition taint_o: id TBit := "to".
 Definition taint_compiled : prog := compile taint_i taint_o taint.
 
 Definition scf_compiled : prog := compile i o scf.
+
+Definition noObf_EVar : id noObf_E := "E".
+Definition noObf_MVar : id noObf_M := "M".
+Definition noObf_compiled : prog := compile noObf_EVar noObf_MVar noObf.
 
 (* ****************************)
 (*  Define HS Print Functions *)
@@ -775,6 +802,8 @@ Definition pretty_print_taint :=
   pretty_print_tb "taint" taint_compiled.
 Definition pretty_print_SCF := 
   pretty_print_tb "SCF" scf_compiled.
+Definition pretty_print_noObf :=
+  pretty_print_tb "noObf" noObf_compiled.
 
 (* ************************)
 (*  Extraction to Haskell *)
@@ -791,5 +820,7 @@ Extract Constant main => "Prelude.putStrLn pretty_print_taint".
 Extraction "taint.hs" pretty_print_taint main.
 Extract Constant main => "Prelude.putStrLn pretty_print_SCF".
 Extraction "SCF.hs" pretty_print_SCF main.
+Extract Constant main => "Prelude.putStrLn pretty_print_noObf".
+Extraction "noObf.hs" pretty_print_noObf main.
 
 
