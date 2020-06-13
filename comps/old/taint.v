@@ -1,0 +1,26 @@
+module taint_tb();
+wire to;
+reg [3:0] ti;
+taint taint1(ti, to);
+integer i;
+initial begin
+ for(i=0;i<4;i=i+1) begin
+  ti[i] = 0;
+end
+
+#10 
+  $display ("Value of to is %b ",to);
+end
+endmodule
+module taint(ti, to);
+output to;
+reg to;
+input [3:0] ti;
+always @(*)
+begin
+ to = 0;
+ to = (ti[3]  | (ti[1]  | (ti[0]  & ti[2] )));
+
+end
+endmodule
+

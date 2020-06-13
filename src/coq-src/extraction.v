@@ -1,3 +1,12 @@
+(* *********************************************************************)
+(*                                                                     *)
+(*                         Rules for Extraction                        *)
+(*                                                                     *)
+(*  This file specifies to Coq how to extract the language into        *)
+(*  haskell with commands that will properly generate verilog code.    *)
+(*                                                                     *)
+(* *********************************************************************)
+
 Require Import ZArith Integers String.
 Require Import FMapWeakList.
 Require Import lang syntax.
@@ -63,6 +72,12 @@ Definition verilog_of_binop (b : binop) : verilog :=
   | OLt => "<"
 end.
 
+Fixpoint verilog_of_phiop (p : phiop) : verilog :=
+  match p with
+  | OPhiNone     => ""
+  | OPhiSome p b => (verilog_of_binop b) ++ (verilog_of_phiop p)
+end.
+
 Fixpoint verilog_of_exp (ty_exp : ty) (e : exp ty_exp) (st : state):
   (verilog * state) :=
   match e with
@@ -78,6 +93,11 @@ Fixpoint verilog_of_exp (ty_exp : ty) (e : exp ty_exp) (st : state):
        ("(" ++ (verilog1)
             ++ " " ++ (verilog_of_binop b) ++ " " 
             ++ (verilog2) ++ ")", st2)
+  | EPhiop _ _ p exp =>
+    let (verilog1, st1) := (verilog_of_exp exp st) in
+       ("(" ++ (verilog1)
+            ++ " " ++ (verilog_of_phiop p) ++ " "
+            ++ ")", st1)
   | ENot _ _ (ENot _ _ exp1) => verilog_of_exp exp1 st         
   | ENot _ _ exp1 => let (verilog1, st') := verilog_of_exp exp1 st in 
                      ("~" ++ verilog1, st')
