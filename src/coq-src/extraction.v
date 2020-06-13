@@ -1,3 +1,12 @@
+(* *********************************************************************)
+(*                                                                     *)
+(*                         Rules for Extraction                        *)
+(*                                                                     *)
+(*  This file specifies to Coq how to extract the language into        *)
+(*  haskell with commands that will properly generate verilog code.    *)
+(*                                                                     *)
+(* *********************************************************************)
+
 Require Import ZArith Integers String.
 Require Import FMapWeakList.
 Require Import lang syntax.

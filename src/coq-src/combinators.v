@@ -1,3 +1,10 @@
+(* *********************************************************************)
+(*                                                                     *)
+(*                       Predicates and Policies                       *)
+(*           A High-Level Description and Functional Compiler          *)
+(*                                                                     *)
+(* *********************************************************************)
+
 Set Implicit Arguments.
 Unset Strict Implicit.
 
