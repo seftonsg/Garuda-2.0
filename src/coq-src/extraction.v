@@ -93,10 +93,12 @@ Fixpoint verilog_of_exp (ty_exp : ty) (e : exp ty_exp) (st : state):
        ("(" ++ (verilog1)
             ++ " " ++ (verilog_of_binop b) ++ " " 
             ++ (verilog2) ++ ")", st2)
-  | EPhiop _ _ p exp =>
-    let (verilog1, st1) := (verilog_of_exp exp st) in
+  | EPhiop _ _ p exp1 exp2 =>
+    let (verilog1, st1) := (verilog_of_exp exp1 st) in
+    let (verilog2, st2) := (verilog_of_exp exp2 st1) in
        ("(" ++ (verilog1)
-            ++ " " ++ (verilog_of_phiop p) ++ " "
+            ++ " " ++ (verilog_of_phiop p)
+            ++ " " ++ (verilog2)
             ++ ")", st1)
   | ENot _ _ (ENot _ _ exp1) => verilog_of_exp exp1 st         
   | ENot _ _ exp1 => let (verilog1, st') := verilog_of_exp exp1 st in 

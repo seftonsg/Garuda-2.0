@@ -264,7 +264,7 @@ Inductive exp : ty -> Type :=
   | EVar : forall t, id t -> exp t
   | EDeref : forall N t (i : iN N), id (TArr N t) -> exp t
   | EBinop : forall t `{ScalarTy t}, binop -> exp t -> exp t -> exp t
-  | EPhiop : forall t `{ScalarTy t}, phiop -> exp t -> exp t (* Would this be single arg? i.e. obf -> exp t -> exp t *)
+  | EPhiop : forall t `{ScalarTy t}, phiop -> exp t -> exp t -> exp t (* Would this be single arg? i.e. obf -> exp t -> exp t *)
   | ENot : forall t `{ScalarTy t}, exp t -> exp t
   | EProj1 : forall t1 t2 `{ScalarTy t1} `{ScalarTy t2}, exp (TProd t1 t2) -> exp t1
   | EProj2 : forall t1 t2 `{ScalarTy t1} `{ScalarTy t2}, exp (TProd t1 t2) -> exp t2.
@@ -317,7 +317,7 @@ Definition binop_interp t `{ScalarTy t} (op : binop) (v1 v2 : interp_ty t) : int
 Definition phiop_interp t `{ScalarTy t} (p : phiop) (v : interp_ty t) : interp_ty t :=
   match p with
   | OPhiNone => v
-  | OPhiSome _ b  => ophiop p b v
+  | OPhiSome _ b => ophiop p b v
   end.
 
 Section state.
@@ -391,9 +391,10 @@ Section exp_interp.
       let v1 := exp_interp e1 in
       let v2 := exp_interp e2 in
       binop_interp op v1 v2
-    | EPhiop _ _ p e =>
-      let v := exp_interp e in
-      phiop_interp p v
+    | EPhiop _ _ p x e =>
+      let e' := exp_interp e in
+      let x' := exp_interp x in
+      phiop_interp p e'
     | ENot _ _ e' => onot (exp_interp e')
     | EProj1 _ _ _ _ e' => fst (exp_interp e')
     | EProj2 _ _ _ _ e' => snd (exp_interp e')                    
