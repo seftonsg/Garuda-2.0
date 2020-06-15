@@ -38,11 +38,11 @@ Section noObf.
   (* EffAddr *)
   Definition noObf_ea  := EffAddr.
   Definition noObf_eaO := Obf noObf_ea.
-  Definition noObf_Phi x := EPhiop (OPhiNone) x.
+  Definition noObf_Phi x := PPhi OPhiNone x x.
   (*Definition (ea : fld) := ea -> ea -> Phi.*)
 
   (*Definition noObf: pol noObf_E noObf_M := PPhi noObf_Phi.*)
-  Definition noObf: pol TVec64 TVec64 := PPhi (noObf_Phi (EVal (ofromz 0))).
+  Definition noObf: pol TVec64 TVec64 := PPhi noObf_Phi.
 
 End noObf.
 
@@ -67,7 +67,7 @@ Section XORO.
   Definition XORO_key := EVal (ofromz 11673330234144325632).
   (*Definition XORO_Phi x := EPhiop (OPhiSome ((OPhiNone) x) (OXor (EVar XORO_key))).*)
   Definition XORO_Phi := OPhiSome OPhiNone OXor.
-  Definition XORO_EPhi x:= EPhiop XORO_Phi x.
+  Definition XORO_EPhi x:= SPhi XORO_Phi x.
 
 
   (*Definition XORO: pol XORO_E XORO_M := PPhi XORO_Phi.*)

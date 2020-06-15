@@ -42,7 +42,7 @@ Inductive fld : Type :=
 Fixpoint offset (f : fld) : Int64.int :=
   match f with
   | OpCode => Int64.repr 26
-  | Funct => Int64.repr 0 
+  | Funct => Int64.repr 0   
   | Format => Int64.repr 21                         
   | Rt => Int64.repr 11                     
   | ImmAddr => Int64.repr 0 
@@ -98,7 +98,7 @@ Inductive pol : ty -> ty -> Type :=
   (* Update *)
   | PUpd : forall ity oty  `{ScalarTy ity} `{ScalarTy oty}, (exp ity -> exp oty) -> pol ity oty
   (* Phi Obfuscation *)
-  | PPhi : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, (exp ity -> exp oty) -> pol ity oty
+  | PPhi : forall ity oty  `{ScalarTy ity} `{ScalarTy oty},  pol ity oty
   (* TODO: nonfunctional, compiles to nothing *)
   | PProj1 : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, pol (TProd ity1 ity2) ity1
   (* TODO: nonfunctional, compiles to nothing *)
@@ -175,7 +175,8 @@ Module PolInterp. Section pol_interp.
     (* Update *)
     | PUpd _ _ _ _ f => fun v_in v_out => exp_interp s (f (EVal v_in)) = v_out
     (* Phi Obfuscate *)
-    | PPhi _ _ _ _ p' => fun v_in v_out => exp_interp s (p' (EVal v_in)) = v_out
+    | PPhi _ _ _ p' => 
+      fun v_in v_out => stmt_interp SPhi s p' v_in v_out
     (*| PPhi _ _ _ _ _ => fun v_in v_out => False*)
     (* TODO: nonfunctional, compiles to nothing *)
     | PProj1 _ _ _ _ => fun v_in v_out => fst v_in = v_out
