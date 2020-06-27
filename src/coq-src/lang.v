@@ -1,6 +1,7 @@
 (* *********************************************************************)
 (*                                                                     *)
 (*                        Intermediate Language                        *)
+(*                         (Nondescript Title)                         *)
 (*                                                                     *)
 (* *********************************************************************)
 
@@ -136,9 +137,11 @@ Inductive binop : Type :=
 | OEq  (* equality *)
 | OLt  (* less than *).
 
+
 Inductive phiop : Type :=
 | OPhiNone (* no change*)
-| OPhiSome (module : string). (* A module *)
+| OPhiSome (m : string). (* A module *)
+(* Should I support embedded modules (strings of binops)? *)
 
 (* ***************************************)
 (*  Coercions from Inductive to Function *)
@@ -390,7 +393,8 @@ Section exp_interp.
       let v1 := exp_interp e1 in
       let v2 := exp_interp e2 in
       binop_interp op v1 v2
-  (*  | EPhiop _ _ p x =>
+    (* Needs two intermediates: varname of module & varname of output *)
+    | EPhiop _ _ p x y =>
       let x' := exp_interp x in
       phiop_interp p x'*)
     | ENot _ _ e' => onot (exp_interp e')
@@ -450,7 +454,8 @@ Fixpoint stmt_interp (s : state) (c : stmt) : state :=
   match c with
   | SAssign _ _ x e => 
     let v := exp_interp s e in upd x v s
-  | SPhi _ _ p x y => s
+  | SPhi _ _ p x y =>
+    let p' := exp_interp s p in upd x p' s
   | SUpdate _ _ t x i e =>
     let v := exp_interp s e in
       upd x (arr_upd (s _ x) i v) s
