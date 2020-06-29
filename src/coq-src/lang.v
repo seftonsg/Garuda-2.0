@@ -267,7 +267,7 @@ Inductive exp : ty -> Type :=
   | EVar : forall t, id t -> exp t
   | EDeref : forall N t (i : iN N), id (TArr N t) -> exp t
   | EBinop : forall t `{ScalarTy t}, binop -> exp t -> exp t -> exp t
-  (*| EPhiop : forall t `{ScalarTy t}, phiop -> exp t -> exp t (* Would this be single arg? i.e. obf -> exp t -> exp t *)*)
+  | EPhiop : forall t `{ScalarTy t}, phiop -> exp t -> exp t -> exp t (* Would this be single arg? i.e. obf -> exp t -> exp t *)
   | ENot : forall t `{ScalarTy t}, exp t -> exp t
   | EProj1 : forall t1 t2 `{ScalarTy t1} `{ScalarTy t2}, exp (TProd t1 t2) -> exp t1
   | EProj2 : forall t1 t2 `{ScalarTy t1} `{ScalarTy t2}, exp (TProd t1 t2) -> exp t2.
@@ -288,7 +288,7 @@ Qed.
 
 Inductive stmt : Type :=
   | SAssign : forall t `{ScalarTy t} (x:id t) (e:exp t), stmt
-  | SPhi    : forall t `{ScalarTy t} (p : phiop) (x y : id t), stmt
+  | SModule : forall t `{ScalarTy t} (p : phiop) (m x y : id t), stmt
   | SUpdate : forall t `{ScalarTy t} N (x:id (TArr N t)) (i:iN N) (e:exp t), stmt
   | SSeq : stmt -> stmt -> stmt
   | SITE : forall t `{ScalarTy t}, exp t -> stmt -> stmt -> stmt
@@ -319,8 +319,8 @@ Definition binop_interp t `{ScalarTy t} (op : binop) (v1 v2 : interp_ty t) : int
   obinop op v1 v2.
 
 (* I feel like this should have something to do with the processing of the exp EVal? *)
-Definition phiop_interp t `{ScalarTy t} (p : phiop) (x : interp_ty t) : interp_ty t :=
-  ophiop p x.
+Definition phiop_interp t `{ScalarTy t} (op : phiop) (x y : interp_ty t) : interp_ty t :=
+  ophiop op x.
 
 Section state.
   Definition state := forall t, id t -> interp_ty t.
@@ -396,7 +396,8 @@ Section exp_interp.
     (* Needs two intermediates: varname of module & varname of output *)
     | EPhiop _ _ p x y =>
       let x' := exp_interp x in
-      phiop_interp p x'*)
+      let y' := exp_interp y in
+      phiop_interp p x' y'
     | ENot _ _ e' => onot (exp_interp e')
     | EProj1 _ _ _ _ e' => fst (exp_interp e')
     | EProj2 _ _ _ _ e' => snd (exp_interp e')                    
@@ -449,38 +450,46 @@ Definition itern_seq_list hi (l : list (iN hi)) (f : iN hi -> stmt) : stmt :=
 Definition SIter lo hi (f : iN hi -> stmt) : stmt :=
   itern_seq_list (Fin_list_lo_hi lo hi) f.
 
-(* Determine if the state needs to be changed *)
-Fixpoint stmt_interp (s : state) (c : stmt) : state :=
-  match c with
-  | SAssign _ _ x e => 
+Section stmt_interp.
+
+  (* Determine if the state needs to be changed *)
+  Fixpoint stmt_interp (s : state) (c : stmt) : state :=
+    match c with
+    | SAssign _ _ x e => 
+      let v := exp_interp s e in 
+        upd x v s
+    (* upd x should give the module variable *)
+    (* exp_interp on p should give output var*)
+    | SModule _ _ p m x y =>
+      let m' := exp_interp s (EVar m) in
+      let x' := exp_interp s (EVar x) in
+      let y' := exp_interp s (EVar y) in
+      upd x x' s
+    | SUpdate _ _ t x i e =>
+      let v := exp_interp s e in
+        upd x (arr_upd (s _ x) i v) s
+    | SSeq c1 c2 =>
+      stmt_interp (stmt_interp s c1) c2
+    | SITE _ _ e c1 c2 =>
+      let v := exp_interp s e in
+      if oiszero v then stmt_interp s c2
+      else stmt_interp s c1
+    | SSkip => s
+    end.
+
+  Lemma fwd_seq s c1 c2: 
+    stmt_interp s (SSeq c1 c2) = stmt_interp (stmt_interp s c1) c2.
+  Proof. reflexivity. Qed.
+
+  Lemma fwd_skip s: 
+    stmt_interp s SSkip = s.
+  Proof. reflexivity. Qed.
+
+  Lemma fwd_update {T} `{ScalarTy T} N s (x : id (TArr N T)) (i: iN N) e:
     let v := exp_interp s e in 
-      upd x v s
-  | SPhi _ _ p x y =>
-    let p' := exp_interp s p in upd x p' s
-  | SUpdate _ _ t x i e =>
-    let v := exp_interp s e in
-      upd x (arr_upd (s _ x) i v) s
-  | SSeq c1 c2 =>
-    stmt_interp (stmt_interp s c1) c2
-  | SITE _ _ e c1 c2 =>
-    let v := exp_interp s e in
-    if oiszero v then stmt_interp s c2
-    else stmt_interp s c1
-  | SSkip => s
-  end.
-
-Lemma fwd_seq s c1 c2: 
-  stmt_interp s (SSeq c1 c2) = stmt_interp (stmt_interp s c1) c2.
-Proof. reflexivity. Qed.
-
-Lemma fwd_skip s: 
-  stmt_interp s SSkip = s.
-Proof. reflexivity. Qed.
-
-Lemma fwd_update {T} `{ScalarTy T} N s (x : id (TArr N T)) (i: iN N) e:
-  let v := exp_interp s e in 
-  stmt_interp s (SUpdate x i e) = upd x (arr_upd (s _ x) i v) s.
-Proof. reflexivity. Qed.
+    stmt_interp s (SUpdate x i e) = upd x (arr_upd (s _ x) i v) s.
+  Proof. reflexivity. Qed.
+End stmt_interp.
 
 Program Fixpoint prog_interp (s : state) (p : prog) : state :=
   match p with
@@ -533,7 +542,8 @@ Fixpoint wp_stmt (c : stmt) (Q : predicate) : predicate :=
   | SSkip => Q
   | SAssign _ _ x e => fun s =>
       Q (let v := exp_interp s e in upd x v s)
-  | SPhi _ _ p x y => Q
+  | SModule _ _ p m x y => fun s =>
+      Q (let v := exp_interp s (EVar x) in upd x v s)
   | SUpdate _ _ t x i e => fun s =>
       Q (let v := exp_interp s e in upd x (arr_upd (s _ x) i v) s)
   | SSeq s1 s2 =>

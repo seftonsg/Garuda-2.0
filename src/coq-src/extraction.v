@@ -106,7 +106,7 @@ Program Fixpoint verilog_of_stmt (s : stmt) (st : state)
   | SAssign _ _ id1 exp1 => (*all assignments are blocking*)
     let (verilog1, st1) := (verilog_of_exp exp1 st) in
     (" " ++ id1 ++ " = " ++ (verilog1) ++ ";" ++ newline, st1)
-  | SPhi _ _ p id1 id2 => (* apply another module *)
+  | SModule _ _ p id1 id2 => (* apply another module *)
     (*let (verilog1, st1) := (verilog_of_phiop p st) in*)
     (" " ++ (verilog_of_phiop p id1 id2) ++ newline, st)
   | SUpdate _ _ N id1 inN exp1 =>
