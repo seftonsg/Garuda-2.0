@@ -72,13 +72,11 @@ Definition verilog_of_binop (b : binop) : verilog :=
   | OLt => "<"
 end.
 
-(*Fixpoint verilog_of_phiop (p : phiop) (m x y : verilog) (st : state) : verilog :=
+Fixpoint verilog_of_phiop (p : phiop) (st : state) : (verilog * state) :=
   match p with
-  | OPhiNone   => x ++ " = " ++ x ++ ";"
-  | OPhiSome m => 
-    let (verilog_args, st)
-  m ++ "(" ++ x ++ "," ++ y ++ ");"
-end.*)
+  | OPhiNone   => ("", st)
+  | OPhiSome m => (m, st)
+end.
 
 Fixpoint verilog_of_exp (ty_exp : ty) (e : exp ty_exp) (st : state):
   (verilog * state) :=
@@ -96,9 +94,9 @@ Fixpoint verilog_of_exp (ty_exp : ty) (e : exp ty_exp) (st : state):
             ++ " " ++ (verilog_of_binop b) ++ " " 
             ++ (verilog2) ++ ")", st2)
   | EPhiop _ _ p exp1 exp2 =>
-    let (verilog1, st1) := (verilog_of_exp exp1 st) in
-    let (verilog2, st2) := (verilog_of_exp exp2 st1) in
-    ("(" ++ (verilog1) ++ ", " ++ (verilog2) ++ ")", st2)
+    let (verilog_in,  st1) := (verilog_of_exp exp1 st) in
+    let (verilog_out, st2) := (verilog_of_exp exp2 st1) in
+    ("(" ++ (verilog_out) ++ ", " ++ (verilog_in) ++ ")", st2)
   | ENot _ _ (ENot _ _ exp1) => verilog_of_exp exp1 st         
   | ENot _ _ exp1 => let (verilog1, st') := verilog_of_exp exp1 st in 
                      ("~" ++ verilog1, st')
@@ -113,10 +111,15 @@ Program Fixpoint verilog_of_stmt (s : stmt) (st : state)
     let (verilog1, st1) := (verilog_of_exp exp1 st) in
     (" " ++ id1 ++ " = " ++ (verilog1) ++ ";" ++ newline, st1)
   | SModule _ _ p m x y => (* apply another module *)
-    (*let (verilog1, st1) := (verilog_of_phiop p st) in*)
+    let mid := (EVar m) in
     let exp := (EPhiop p (EVar x) (EVar y)) in
-    let (verilog_args, st1) := (verilog_of_exp exp st) in 
-    (" "  ++ newline, st)
+    let (verilog_mid,  st1) := (verilog_of_exp (EVar m) st) in
+    let (verilog_args, st2) := (verilog_of_exp exp st1) in 
+    let (verilog_mod,  st3) := (verilog_of_phiop p st2) in
+    (" " ++ (verilog_mod) ++ " "
+         ++ (verilog_mid)  ++ "" 
+         ++ (verilog_args) ++ ";"
+         ++ newline,               st3)
   | SUpdate _ _ N id1 inN exp1 =>
     let (verilog1, st1) := (verilog_of_exp exp1 st) in
     (" " ++ id1++"["++(show (nat_to_prelInt inN)) ++ "]"++" = "++

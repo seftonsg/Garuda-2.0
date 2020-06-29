@@ -430,8 +430,10 @@ Fixpoint compile_pol
   | PPhi t1 t2 _ _ p' => 
     match p' with
     | OPhiNone => ret (@SAssign t2 _ o (@EVar t2 i))
-    | OPhiSome s => ret SSkip
-    (*ret (@SModule t2 _ p' _ (@EVar t1 i) o)*)
+    | OPhiSome s => 
+      bind new_buf (fun m_new1 =>
+      ret (SModule p' m_new1 i o)
+      )
     end
 
   (* TODO: nonfunctional, compiles to nothing *)
