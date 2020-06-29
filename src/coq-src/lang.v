@@ -453,7 +453,8 @@ Definition SIter lo hi (f : iN hi -> stmt) : stmt :=
 Fixpoint stmt_interp (s : state) (c : stmt) : state :=
   match c with
   | SAssign _ _ x e => 
-    let v := exp_interp s e in upd x v s
+    let v := exp_interp s e in 
+      upd x v s
   | SPhi _ _ p x y =>
     let p' := exp_interp s p in upd x p' s
   | SUpdate _ _ t x i e =>
