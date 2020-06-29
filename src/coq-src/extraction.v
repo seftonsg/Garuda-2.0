@@ -72,10 +72,10 @@ Definition verilog_of_binop (b : binop) : verilog :=
   | OLt => "<"
 end.
 
-Fixpoint verilog_of_phiop (p : phiop) : verilog :=
+Fixpoint verilog_of_phiop (p : phiop) (x y : verilog) : verilog :=
   match p with
-  | OPhiNone     => ""
-  | OPhiSome p b => (verilog_of_binop b) ++ (verilog_of_phiop p)
+  | OPhiNone   => x ++ " = " ++ x ++ ";"
+  | OPhiSome m => m ++ "(" ++ x ++ "," ++ y ++ ");"
 end.
 
 Fixpoint verilog_of_exp (ty_exp : ty) (e : exp ty_exp) (st : state):
@@ -93,11 +93,6 @@ Fixpoint verilog_of_exp (ty_exp : ty) (e : exp ty_exp) (st : state):
        ("(" ++ (verilog1)
             ++ " " ++ (verilog_of_binop b) ++ " " 
             ++ (verilog2) ++ ")", st2)
-  | EPhiop _ _ p exp =>
-    let (verilog1, st1) := (verilog_of_exp exp st) in
-       ("(" ++ (verilog1)
-            ++ " " ++ (verilog_of_phiop p) ++ " "
-            ++ ")", st1)
   | ENot _ _ (ENot _ _ exp1) => verilog_of_exp exp1 st         
   | ENot _ _ exp1 => let (verilog1, st') := verilog_of_exp exp1 st in 
                      ("~" ++ verilog1, st')
@@ -111,6 +106,9 @@ Program Fixpoint verilog_of_stmt (s : stmt) (st : state)
   | SAssign _ _ id1 exp1 => (*all assignments are blocking*)
     let (verilog1, st1) := (verilog_of_exp exp1 st) in
     (" " ++ id1 ++ " = " ++ (verilog1) ++ ";" ++ newline, st1)
+  | SModule _ _ p id1 id2 => (* apply another module *)
+    (*let (verilog1, st1) := (verilog_of_phiop p st) in*)
+    (" " ++ (verilog_of_phiop p id1 id2) ++ newline, st)
   | SUpdate _ _ N id1 inN exp1 =>
     let (verilog1, st1) := (verilog_of_exp exp1 st) in
     (" " ++ id1++"["++(show (nat_to_prelInt inN)) ++ "]"++" = "++
