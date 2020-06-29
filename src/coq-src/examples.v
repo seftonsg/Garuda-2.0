@@ -38,11 +38,11 @@ Section noObf.
   (* EffAddr *)
   Definition noObf_ea  := EffAddr.
   Definition noObf_eaO := Obf noObf_ea.
-  Definition noObf_Phi x := PPhi OPhiNone x x.
+  Definition noObf_Phi := PPhi OPhiNone.
   (*Definition (ea : fld) := ea -> ea -> Phi.*)
 
   (*Definition noObf: pol noObf_E noObf_M := PPhi noObf_Phi.*)
-  Definition noObf: pol TVec64 TVec64 := PPhi noObf_Phi.
+  Definition noObf: pol TVec64 TVec64 := noObf_Phi.
 
 End noObf.
 
@@ -66,12 +66,12 @@ Section XORO.
   Definition XORO_eaO := Obf XORO_ea.
   Definition XORO_key := EVal (ofromz 11673330234144325632).
   (*Definition XORO_Phi x := EPhiop (OPhiSome ((OPhiNone) x) (OXor (EVar XORO_key))).*)
-  Definition XORO_Phi := OPhiSome OPhiNone OXor.
-  Definition XORO_EPhi x:= SPhi XORO_Phi x.
+  Definition XORO_Phi := OPhiSome "test".
+  Definition XORO_EPhi := PPhi XORO_Phi.
 
 
-  (*Definition XORO: pol XORO_E XORO_M := PPhi XORO_Phi.*)
-  Definition XORO: pol TVec64 TVec64 := PPhi (XORO_EPhi (EVal (ofromz 0))).
+  Definition XORO: pol XORO_E XORO_M := XORO_EPhi.
+  (*Definition XORO: pol TVec64 TVec64 := XORO_EPhi (EVal (ofromz 0)).*)
 
 End XORO.
 
@@ -90,7 +90,7 @@ Definition XORO_compiled : prog := compile noObf_EVar noObf_MVar XORO.
 Definition pretty_print_noObf :=
   pretty_print_tb "noObf" noObf_compiled.
 Definition pretty_print_XORO :=
-  pretty_print_tb "XORO" noObf_compiled.
+  pretty_print_tb "XORO" XORO_compiled.
 
 
 (* ************************)

@@ -74,7 +74,11 @@ Fixpoint size (f : fld) : Int64.int :=
   | Obf f => size f
   (*| Phi f => size f*)
   end.
-
+(*
+Inductive phi {t:ty} : Type :=
+  | MMod : fld -> phi.
+Arguments phi t : clear implicits.
+*)
 Inductive pred {t:ty} : Type :=
   (* Binary Operation of Two Predicates *)
   (* Sum, Product *)
@@ -98,7 +102,7 @@ Inductive pol : ty -> ty -> Type :=
   (* Update *)
   | PUpd : forall ity oty  `{ScalarTy ity} `{ScalarTy oty}, (exp ity -> exp oty) -> pol ity oty
   (* Phi Obfuscation *)
-  | PPhi : forall ity oty  `{ScalarTy ity} `{ScalarTy oty}, pol ity oty
+  | PPhi : forall ity oty  `{ScalarTy ity} `{ScalarTy oty}, phiop -> pol ity oty
   (* TODO: nonfunctional, compiles to nothing *)
   | PProj1 : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, pol (TProd ity1 ity2) ity1
   (* TODO: nonfunctional, compiles to nothing *)
@@ -145,23 +149,23 @@ Fixpoint pred_interp t `{ScalarTy t} (e : pred t) : interp_ty t -> Prop :=
   (* Sum *)
   | BPred OOr e1 e2 => fun v => pred_interp e1 v \/ pred_interp e2 v
   (* catch other binops *)
-  | BPred _ _ _ => fun _ => False (*other binops are nonboolean*)
+  | BPred _ _ _ => fun _ => False (* other binops are nonboolean *)
   (* Falsity *)
   | BZero => fun _ => False
   (* Negation *)
   | BNeg e2 => fun v => not (pred_interp e2 v)
   (* Test *) (* TODO: double check *)
   | BField f i => fun v =>
-                    oiszero
-                      (obinop OEq
-                              (obinop
-                                 OAnd
-                                 (obinop OShru v (ofromz (Int64.intval (offset f))))
-                                 (obinop OShru
-                                         (ofromz 18446744073709551615)
-                                         (ofromz (Int64.intval (size f)))))
-                              i)
-                    = false
+    oiszero
+      (obinop OEq
+              (obinop
+                 OAnd
+                 (obinop OShru v (ofromz (Int64.intval (offset f))))
+                 (obinop OShru
+                         (ofromz 18446744073709551615)
+                         (ofromz (Int64.intval (size f)))))
+              i)
+    = false
   end.
 
 Module PolInterp. Section pol_interp.
@@ -175,9 +179,9 @@ Module PolInterp. Section pol_interp.
     (* Update *)
     | PUpd _ _ _ _ f => fun v_in v_out => exp_interp s (f (EVal v_in)) = v_out
     (* Phi Obfuscate *)
-    | PPhi _ _ _ p' => 
-      fun v_in v_out => stmt_interp s (SPhi p' v_in v_out)
-    (*| PPhi _ _ _ _ _ => fun v_in v_out => False*)
+    | PPhi _ _ _ _ p' => 
+      fun v_in v_out => exp_interp s (EPhiop p' (EVal v_in) (EVal v_in)) = v_in
+      (*fun v_in v_out => stmt_interp s (SModule p' (EVar v_in) (EVar v_out))*)
     (* TODO: nonfunctional, compiles to nothing *)
     | PProj1 _ _ _ _ => fun v_in v_out => fst v_in = v_out
     (* TODO: nonfunctional, compiles to nothing *)
@@ -423,7 +427,12 @@ Fixpoint compile_pol
   | PUpd t1 t2 _ _ f => ret (@SAssign t2 _ o (f (@EVar t1 i)))
 
   (* Phi Obfuscation *)
-  | PPhi t1 t2 _ _ p => ret (@SAssign t2 _ o (p (@EVar t1 i)))
+  | PPhi t1 t2 _ _ p' => 
+    match p' with
+    | OPhiNone => ret (@SAssign t2 _ o (@EVar t2 i))
+    | OPhiSome s => ret SSkip
+    (*ret (@SModule t2 _ p' _ (@EVar t1 i) o)*)
+    end
 
   (* TODO: nonfunctional, compiles to nothing *)
   | PProj1 t1 t2 _ _ => ret SSkip (* FIXME *)
