@@ -98,15 +98,20 @@ Definition BFieldRange t (f:fld) (i:Int64.int) (v:interp_ty t) : pred t :=
 
 Inductive pol : ty -> ty -> Type :=
   (* Test *)
-  | PTest : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pred ity -> pol ity oty -> pol ity oty
+  | PTest   : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, 
+              pred ity -> pol ity oty -> pol ity oty
   (* Update *)
-  | PUpd : forall ity oty  `{ScalarTy ity} `{ScalarTy oty}, (exp ity -> exp oty) -> pol ity oty
+  | PUpd    : forall ity oty  `{ScalarTy ity} `{ScalarTy oty}, 
+              (exp ity -> exp oty) -> pol ity oty
   (* Phi Obfuscation *)
-  | PPhi : forall ity oty  `{ScalarTy ity} `{ScalarTy oty}, phiop -> pol ity oty
+  | PPhi    : forall ity oty  `{ScalarTy ity} `{ScalarTy oty}, 
+              phiop -> pol ity oty
   (* TODO: nonfunctional, compiles to nothing *)
-  | PProj1 : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, pol (TProd ity1 ity2) ity1
+  | PProj1  : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, 
+              pol (TProd ity1 ity2) ity1
   (* TODO: nonfunctional, compiles to nothing *)
-  | PProj2 : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, pol (TProd ity1 ity2) ity2
+  | PProj2  : forall ity1 ity2 `{ScalarTy ity1} `{ScalarTy ity2}, 
+              pol (TProd ity1 ity2) ity2
   (* Choice *)
   | PChoice : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, 
               pol ity oty -> pol ity oty -> pol ity oty
@@ -114,17 +119,21 @@ Inductive pol : ty -> ty -> Type :=
   | PConcat : forall ity ety oty  `{ScalarTy ity} `{ScalarTy ety} `{ScalarTy oty},
               pol ity ety -> pol ety oty -> pol ity oty
   (* Skip: compile nothing *)
-  | PSkip : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pol ity oty
+  | PSkip   : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, 
+              pol ity oty
   (* Fail: assign a noop *)
-  | PFail : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, pol ity oty
+  | PFail   : forall ity oty `{ScalarTy ity} `{ScalarTy oty}, 
+              pol ity oty
   (* Identity *)
-  | PId : forall ity `{ScalarTy ity}, pol ity ity.
+  | PId     : forall ity `{ScalarTy ity}, 
+              pol ity ity.
 
 Inductive dpol : ty -> ty -> ty -> ty -> Type :=
   (* Split into two single-stream policies *)
-  | DPSplit : forall ety eoty moty mty
-             `{ScalarTy ety} `{ScalarTy eoty} `{ScalarTy moty} `{ScalarTy mty},
-             pol ety eoty -> pol moty mty -> dpol ety eoty moty mty.
+  | DPSplit : forall ity jty nty mty
+             `{ScalarTy ity} `{ScalarTy jty} 
+             `{ScalarTy nty} `{ScalarTy mty},
+             pol ity jty -> pol nty mty -> dpol ity jty nty mty.
 
 Record Pol: Type :=
   mkPol {
@@ -199,109 +208,123 @@ Module PolInterp. Section pol_interp.
     (* Identity *)
     | PId _ _ => fun v_in v_out => v_out = v_in
     end.
+
+    Fixpoint dpol_interp {ity jty nty mty} 
+             `{ScalarTy ity} `{ScalarTy jty} 
+             `{ScalarTy nty} `{ScalarTy mty}
+              (p: dpol ity jty nty mty) : 
+              interp_ty ity -> interp_ty jty ->
+              interp_ty nty -> interp_ty mty -> Prop :=
+    match p with
+    (* Test *)
+    | DPSplit _ _ _ _ _ _ _ _ p1 p2 => 
+      fun vi vj vn vm =>
+      pol_interp p1 vi vj /\ 
+      pol_interp p2 vn vm
+    end.
 End pol_interp. End PolInterp.
+
 
 (* *******************************)
 (*  Theorems of general policies *)
 (* *******************************)
-
 Section equations.
-Variable  P:  Pol.
-Variable DP: DPol.
+  Variable  P:  Pol.
+  Variable DP: DPol.
 
-Notation ity := P.(ity).
-Notation oty := P.(oty).
+  Notation ity := P.(ity).
+  Notation oty := P.(oty).
 
-Definition the_ity_ScalarTy := P.(ity_ScalarTy).
-Existing Instance the_ity_ScalarTy.
-Definition the_oty_ScalarTy := P.(oty_ScalarTy).
-Existing Instance the_oty_ScalarTy.
+  Definition the_ity_ScalarTy := P.(ity_ScalarTy).
+  Existing Instance the_ity_ScalarTy.
+  Definition the_oty_ScalarTy := P.(oty_ScalarTy).
+  Existing Instance the_oty_ScalarTy.
 
-Notation pol := (pol _ _).
-Notation PId := (@PId _ _).
+  Notation pol := (pol _ _).
+  Notation PId := (@PId _ _).
 
-Import PolInterp.
+  Import PolInterp.
 
-Notation pol_interp s p v_in v_out :=
-  (@pol_interp s ity oty the_ity_ScalarTy the_oty_ScalarTy p v_in v_out).
+  Notation pol_interp s p v_in v_out :=
+    (@pol_interp s ity oty the_ity_ScalarTy the_oty_ScalarTy p v_in v_out).
 
-Definition pol_eq (p1 p2 : pol) := 
-  forall s v_in v_out,
-    pol_interp s p1 v_in v_out <-> pol_interp s p2 v_in v_out.
+  Definition pol_eq (p1 p2 : pol) := 
+    forall s v_in v_out,
+      pol_interp s p1 v_in v_out <-> pol_interp s p2 v_in v_out.
 
-Infix "===" := (pol_eq) (at level 70).
+  Infix "===" := (pol_eq) (at level 70).
 
-Lemma concat_idl : forall p: pol, PConcat PId p === p.
-Proof.
-  intros p; split; simpl.
-  { intros [v [-> H]]; auto. }
-  intros H.
-  exists v_in.
-  split; auto.
-Qed.
+  Lemma concat_idl : forall p: pol, PConcat PId p === p.
+  Proof.
+    intros p; split; simpl.
+    { intros [v [-> H]]; auto. }
+    intros H.
+    exists v_in.
+    split; auto.
+  Qed.
 
-Lemma concat_idr (H:ity=oty) : forall p, PConcat p PId === p.
-Proof.
-  intros p; split; simpl.
-  { intros [v_int [H1 H2]]; auto.
-    subst; auto. }
-  intros H2; exists v_out; split; auto.
-Qed.
+  Lemma concat_idr (H:ity=oty) : forall p, PConcat p PId === p.
+  Proof.
+    intros p; split; simpl.
+    { intros [v_int [H1 H2]]; auto.
+      subst; auto. }
+    intros H2; exists v_out; split; auto.
+  Qed.
 
-Lemma concat_test_id : forall p e,
-  PConcat (PTest e PId) p === PTest e p.
-Proof.
-  intros p e; unfold pol_eq; intros s v_in v_out; split.
-  { simpl. 
-     intros [v_int [[H1 H2] H3]].
-     subst.
-     split; auto. }
-  simpl.
-  intros [H1 H2]; exists v_in.
-  split; auto.
-Qed.
+  Lemma concat_test_id : forall p e,
+    PConcat (PTest e PId) p === PTest e p.
+  Proof.
+    intros p e; unfold pol_eq; intros s v_in v_out; split.
+    { simpl. 
+       intros [v_int [[H1 H2] H3]].
+       subst.
+       split; auto. }
+    simpl.
+    intros [H1 H2]; exists v_in.
+    split; auto.
+  Qed.
 
-(*Lemma pupd_id : @PUpd ity oty (fun x => x) === PId eq_refl.
-Proof.
-  unfold pol_eq; intros s v_in v_out; simpl; split; auto.
-Qed.*)
+  (*Lemma pupd_id : @PUpd ity oty (fun x => x) === PId eq_refl.
+  Proof.
+    unfold pol_eq; intros s v_in v_out; simpl; split; auto.
+  Qed.*)
 
-Lemma concat_comp : forall f g,
-  (forall s e, 
-     exp_interp s (g e) = 
-     exp_interp s (g (EVal (exp_interp s e)))) ->
-  PConcat (PUpd f) (PUpd g) === PUpd (fun x => g (f x)).
-Proof.
-  intros f g X; unfold pol_eq; intros s v_in v_out; split.
-  { simpl; intros [v_int [H1 H2]].
-     rewrite <-H2.
-     revert g s X H1 H2.
-     generalize (f (EVal v_in)).
-     inversion e; intros; subst; auto. }
-  simpl; intros H.
-  revert g v_out X H.
-  generalize (f (EVal v_in)). 
-  intros.
-  eexists.
-  split.
-  { specialize (X s e).
-     rewrite H in  X. subst. eapply eq_refl. }
-  specialize (X s e); rewrite <-H, X; auto.
-Qed.
+  Lemma concat_comp : forall f g,
+    (forall s e, 
+       exp_interp s (g e) = 
+       exp_interp s (g (EVal (exp_interp s e)))) ->
+    PConcat (PUpd f) (PUpd g) === PUpd (fun x => g (f x)).
+  Proof.
+    intros f g X; unfold pol_eq; intros s v_in v_out; split.
+    { simpl; intros [v_int [H1 H2]].
+       rewrite <-H2.
+       revert g s X H1 H2.
+       generalize (f (EVal v_in)).
+       inversion e; intros; subst; auto. }
+    simpl; intros H.
+    revert g v_out X H.
+    generalize (f (EVal v_in)). 
+    intros.
+    eexists.
+    split.
+    { specialize (X s e).
+       rewrite H in  X. subst. eapply eq_refl. }
+    specialize (X s e); rewrite <-H, X; auto.
+  Qed.
 
-Lemma pol_eq_sym : forall p1 p2, p1 === p2 -> p2 === p1.
-Proof.
-  intros p1 p2; unfold pol_eq; intros H v1 v2.
-  intros v_out.
-  rewrite (H v1 v2); split; auto.
-Qed.
+  Lemma pol_eq_sym : forall p1 p2, p1 === p2 -> p2 === p1.
+  Proof.
+    intros p1 p2; unfold pol_eq; intros H v1 v2.
+    intros v_out.
+    rewrite (H v1 v2); split; auto.
+  Qed.
 
-Lemma choice_failr : forall p, PChoice p PFail === p.
-Proof.
-  intros p v1 v2; split. 
-  { intros [H|H]; [auto|inversion H]. }
-  intros; left; auto.
-Qed.
+  Lemma choice_failr : forall p, PChoice p PFail === p.
+  Proof.
+    intros p v1 v2; split. 
+    { intros [H|H]; [auto|inversion H]. }
+    intros; left; auto.
+  Qed.
 End equations.
 
 
@@ -474,6 +497,17 @@ Fixpoint compile_bufs (bufs : list string) (p : prog) : prog :=
    | nil => p
    | x::bufs' => VDecl Local x (ofromz 0) (compile_bufs bufs' p)
    end.
+
+(*Fixpoint compile_dpol
+         t1 t2 t3 t4
+         `{ScalarTy t1} `{ScalarTy t2}
+         `{ScalarTy t3} `{ScalarTy t4}
+         (i:id t1) (j:id t2) (n:id t3) (m:id t4) 
+         (p : dpol t1 t2 t3 t4) : M state stmt :=
+  match p in dpol t1 t2 t3 t4 with
+  | DPSplit _ _ _ _ _ _ _ _ =>
+    (@compile_pred
+  end.*)
  
 
 (* ********************)
