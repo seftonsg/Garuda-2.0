@@ -1,6 +1,7 @@
 (* *********************************************************************)
 (*                                                                     *)
 (*                        Intermediate Language                        *)
+(*                         (Nondescript Title)                         *)
 (*                                                                     *)
 (* *********************************************************************)
 
@@ -136,9 +137,11 @@ Inductive binop : Type :=
 | OEq  (* equality *)
 | OLt  (* less than *).
 
+
 Inductive phiop : Type :=
-| OPhiNone (* no change*)
-| OPhiSome (p : phiop) (b : binop). (* A recursive chain of binops *)
+| OPhiId (* no change*)
+| OPhi (m : string). (* A module *)
+(* Should I support embedded modules (strings of binops)? *)
 
 (* ***************************************)
 (*  Coercions from Inductive to Function *)
@@ -150,7 +153,7 @@ Class ScalarTy (t:ty) : Type :=
       ofromz : Z -> interp_ty t;
       onot : interp_ty t -> interp_ty t;
       obinop : binop -> interp_ty t -> interp_ty t -> interp_ty t;
-      ophiop : phiop -> binop -> interp_ty t -> interp_ty t;
+      ophiop : phiop -> interp_ty t -> interp_ty t;
     }.
 
 (*  Bit Type Coercions *)
@@ -175,8 +178,8 @@ Instance Bit_ScalarTy : ScalarTy TBit :=
       end)
     (fun p =>
       match p with
-      | OPhiNone => fun _ x => x
-      | OPhiSome p' b => fun p' b => b
+      | OPhiId => fun x => x
+      | OPhi m => fun x => x
       end).
 
 (*  Int32 Type Coercions *)
@@ -201,8 +204,8 @@ Instance Int32_ScalarTy : ScalarTy TVec32 :=
       end)
     (fun p => 
       match p with
-      | OPhiNone => fun _ x => x
-      | OPhiSome p' b => fun p' b => b
+      | OPhiId => fun x => x
+      | OPhi m => fun x => x
     end).
 
 (*  Int64 Type Coercions *)
@@ -227,8 +230,8 @@ Instance Int64_ScalarTy : ScalarTy TVec64 :=
       end)
     (fun p => 
       match p with
-      | OPhiNone => fun _ x => x
-      | OPhiSome p' b => fun p' b => b
+      | OPhiId => fun x => x
+      | OPhi m => fun x => x
     end).
 
 (*  Prod (Pair) Type Coercions *)
@@ -239,7 +242,7 @@ Instance TProd_ScalarTy {t1 t2} `{ScalarTy t1} `{ScalarTy t2} : ScalarTy (TProd 
     (fun z => (ofromz z, ofromz z))
     (fun p:interp_ty (TProd t1 t2) => (onot (fst p), onot (snd p)))
     (fun b (p1 p2:interp_ty (TProd t1 t2)) => (obinop b (fst p1) (fst p2), obinop b (snd p1) (snd p2)))
-    (fun P b (pr:interp_ty (TProd t1 t2)) => (ophiop P b (fst pr), ophiop P b (snd pr))).
+    (fun P (pr:interp_ty (TProd t1 t2)) => (ophiop P (fst pr), ophiop P (snd pr))).
     
 Definition arr_iszero {n t} `{ScalarTy t} (a: interp_ty (TArr n t)): bool :=
   fold_left (fun b x => andb b (oiszero x)) true a.
@@ -251,10 +254,10 @@ Instance TArr_ScalarTy {n t} `{ScalarTy t} : ScalarTy (TArr n t) :=
     (fun a:interp_ty (TArr n t) => fold_left (fun z x => (otoz x * z)%Z) 1%Z a)
     (fun z => const (ofromz z) n)
     (fun a:interp_ty (TArr n t) => map onot a)
-    (fun b (a1 a2:interp_ty (TArr n t))
+    (fun b (a1 a2 : interp_ty (TArr n t))
       => map2 (fun x y => obinop b x y) a1 a2)
-    (fun P b   (a:interp_ty (TArr n t))
-      => (map (fun x => ophiop P b x) a)).
+    (fun P (a : interp_ty (TArr n t))
+      => (map (fun x => ophiop P x) a)).
 
 (* ****************************)
 (*  Definition of Expressions *)
@@ -264,7 +267,7 @@ Inductive exp : ty -> Type :=
   | EVar : forall t, id t -> exp t
   | EDeref : forall N t (i : iN N), id (TArr N t) -> exp t
   | EBinop : forall t `{ScalarTy t}, binop -> exp t -> exp t -> exp t
-  | EPhiop : forall t `{ScalarTy t}, phiop -> exp t -> exp t (* Would this be single arg? i.e. obf -> exp t -> exp t *)
+  | EPhiop : forall t `{ScalarTy t}, phiop -> exp t -> exp t -> exp t (* Would this be single arg? i.e. obf -> exp t -> exp t *)
   | ENot : forall t `{ScalarTy t}, exp t -> exp t
   | EProj1 : forall t1 t2 `{ScalarTy t1} `{ScalarTy t2}, exp (TProd t1 t2) -> exp t1
   | EProj2 : forall t1 t2 `{ScalarTy t1} `{ScalarTy t2}, exp (TProd t1 t2) -> exp t2.
@@ -285,6 +288,7 @@ Qed.
 
 Inductive stmt : Type :=
   | SAssign : forall t `{ScalarTy t} (x:id t) (e:exp t), stmt
+  | SModule : forall t `{ScalarTy t} (p : phiop) (m x y : id t), stmt
   | SUpdate : forall t `{ScalarTy t} N (x:id (TArr N t)) (i:iN N) (e:exp t), stmt
   | SSeq : stmt -> stmt -> stmt
   | SITE : forall t `{ScalarTy t}, exp t -> stmt -> stmt -> stmt
@@ -314,11 +318,9 @@ Inductive prog : Type :=
 Definition binop_interp t `{ScalarTy t} (op : binop) (v1 v2 : interp_ty t) : interp_ty t :=
   obinop op v1 v2.
 
-Definition phiop_interp t `{ScalarTy t} (p : phiop) (v : interp_ty t) : interp_ty t :=
-  match p with
-  | OPhiNone => v
-  | OPhiSome _ b  => ophiop p b v
-  end.
+(* I feel like this should have something to do with the processing of the exp EVal? *)
+Definition phiop_interp t `{ScalarTy t} (op : phiop) (x y : interp_ty t) : interp_ty t :=
+  ophiop op x.
 
 Section state.
   Definition state := forall t, id t -> interp_ty t.
@@ -391,9 +393,11 @@ Section exp_interp.
       let v1 := exp_interp e1 in
       let v2 := exp_interp e2 in
       binop_interp op v1 v2
-    | EPhiop _ _ p e =>
-      let v := exp_interp e in
-      phiop_interp p v
+    (* Needs two intermediates: varname of module & varname of output *)
+    | EPhiop _ _ p x y =>
+      let x' := exp_interp x in
+      let y' := exp_interp y in
+      phiop_interp p x' y'
     | ENot _ _ e' => onot (exp_interp e')
     | EProj1 _ _ _ _ e' => fst (exp_interp e')
     | EProj2 _ _ _ _ e' => snd (exp_interp e')                    
@@ -446,34 +450,46 @@ Definition itern_seq_list hi (l : list (iN hi)) (f : iN hi -> stmt) : stmt :=
 Definition SIter lo hi (f : iN hi -> stmt) : stmt :=
   itern_seq_list (Fin_list_lo_hi lo hi) f.
 
-Fixpoint stmt_interp (s : state) (c : stmt) : state :=
-  match c with
-  | SAssign _ _ x e => 
-    let v := exp_interp s e in upd x v s
-  | SUpdate _ _ t x i e =>
-    let v := exp_interp s e in
-      upd x (arr_upd (s _ x) i v) s
-  | SSeq c1 c2 =>
-    stmt_interp (stmt_interp s c1) c2
-  | SITE _ _ e c1 c2 =>
-    let v := exp_interp s e in
-    if oiszero v then stmt_interp s c2
-    else stmt_interp s c1
-  | SSkip => s
-  end.
+Section stmt_interp.
 
-Lemma fwd_seq s c1 c2: 
-  stmt_interp s (SSeq c1 c2) = stmt_interp (stmt_interp s c1) c2.
-Proof. reflexivity. Qed.
+  (* Determine if the state needs to be changed *)
+  Fixpoint stmt_interp (s : state) (c : stmt) : state :=
+    match c with
+    | SAssign _ _ x e => 
+      let v := exp_interp s e in 
+        upd x v s
+    (* upd x should give the module variable *)
+    (* exp_interp on p should give output var*)
+    | SModule _ _ p m x y =>
+      let m' := exp_interp s (EVar m) in
+      let x' := exp_interp s (EVar x) in
+      let y' := exp_interp s (EVar y) in
+      upd x x' s
+    | SUpdate _ _ t x i e =>
+      let v := exp_interp s e in
+        upd x (arr_upd (s _ x) i v) s
+    | SSeq c1 c2 =>
+      stmt_interp (stmt_interp s c1) c2
+    | SITE _ _ e c1 c2 =>
+      let v := exp_interp s e in
+      if oiszero v then stmt_interp s c2
+      else stmt_interp s c1
+    | SSkip => s
+    end.
 
-Lemma fwd_skip s: 
-  stmt_interp s SSkip = s.
-Proof. reflexivity. Qed.
+  Lemma fwd_seq s c1 c2: 
+    stmt_interp s (SSeq c1 c2) = stmt_interp (stmt_interp s c1) c2.
+  Proof. reflexivity. Qed.
 
-Lemma fwd_update {T} `{ScalarTy T} N s (x : id (TArr N T)) (i: iN N) e:
-  let v := exp_interp s e in 
-  stmt_interp s (SUpdate x i e) = upd x (arr_upd (s _ x) i v) s.
-Proof. reflexivity. Qed.
+  Lemma fwd_skip s: 
+    stmt_interp s SSkip = s.
+  Proof. reflexivity. Qed.
+
+  Lemma fwd_update {T} `{ScalarTy T} N s (x : id (TArr N T)) (i: iN N) e:
+    let v := exp_interp s e in 
+    stmt_interp s (SUpdate x i e) = upd x (arr_upd (s _ x) i v) s.
+  Proof. reflexivity. Qed.
+End stmt_interp.
 
 Program Fixpoint prog_interp (s : state) (p : prog) : state :=
   match p with
@@ -526,6 +542,8 @@ Fixpoint wp_stmt (c : stmt) (Q : predicate) : predicate :=
   | SSkip => Q
   | SAssign _ _ x e => fun s =>
       Q (let v := exp_interp s e in upd x v s)
+  | SModule _ _ p m x y => fun s =>
+      Q (let v := exp_interp s (EVar x) in upd x v s)
   | SUpdate _ _ t x i e => fun s =>
       Q (let v := exp_interp s e in upd x (arr_upd (s _ x) i v) s)
   | SSeq s1 s2 =>
