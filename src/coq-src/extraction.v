@@ -74,8 +74,8 @@ end.
 
 Fixpoint verilog_of_phiop (p : phiop) (st : state) : (verilog * state) :=
   match p with
-  | OPhiNone   => ("", st)
-  | OPhiSome m => (m, st)
+  | OPhiId   => ("", st)
+  | OPhi m => (m, st)
 end.
 
 Fixpoint verilog_of_exp (ty_exp : ty) (e : exp ty_exp) (st : state):

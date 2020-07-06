@@ -38,7 +38,7 @@ Section noObf.
   (* EffAddr *)
   Definition noObf_ea  := EffAddr.
   Definition noObf_eaO := Obf noObf_ea.
-  Definition noObf_Phi := PPhi OPhiNone.
+  Definition noObf_Phi := PPhi OPhiId.
   (*Definition (ea : fld) := ea -> ea -> Phi.*)
 
   (*Definition noObf: pol noObf_E noObf_M := PPhi noObf_Phi.*)
@@ -73,7 +73,7 @@ Section XORO.
   Definition XORO_ea  := EffAddr.
   Definition XORO_eaO := Obf XORO_ea.
   Definition XORO_key := EVal (ofromz 11673330234144325632).
-  Definition XORO_Phi := PPhi (OPhiSome "XORO_Mod").
+  Definition XORO_Phi := PPhi (OPhi "XORO_Mod").
 
 
   Definition XORO: pol XORO_E XORO_M := XORO_Phi.
@@ -84,11 +84,13 @@ End XORO.
 (* ***********************)
 (*  Define Pols Compiled *)
 (* ***********************)
-Definition noObf_EVar : id noObf_E := "EXE_Stream".
-Definition noObf_MVar : id noObf_M := "MEM_Stream".
-Definition noObf_compiled : prog := compile noObf_EVar noObf_MVar noObf.
-Definition XORO_compiled : prog := compile noObf_EVar noObf_MVar XORO.
-Definition XORM_compiled : prog := compile noObf_EVar noObf_MVar XORO_Mod.
+Definition EVar : id noObf_E := "EXE_Stream".
+Definition MVar : id noObf_M := "MEM_Stream".
+
+Definition noObf_compiled : prog := compile EVar MVar noObf.
+
+Definition XORM_compiled : prog := compile EVar MVar XORO_Mod.
+Definition XORO_compiled : prog := compile EVar MVar XORO.
 
 (* Definition EXE_O  : id noObf_E := "EXE_Out". 
    Definition EXE_SR : id noObf_E := "EXE_SReg".
@@ -101,10 +103,11 @@ Definition XORM_compiled : prog := compile noObf_EVar noObf_MVar XORO_Mod.
 (* ****************************)
 Definition pretty_print_noObf :=
   pretty_print_tb "noObf" noObf_compiled.
-Definition pretty_print_XORO :=
-  pretty_print_tb "XORO" XORO_compiled.
+
 Definition pretty_print_XORM :=
   pretty_print_tb "XORO_Mod" XORM_compiled.
+Definition pretty_print_XORO :=
+  pretty_print_tb "XORO" XORO_compiled.
 
 
 (* ************************)
@@ -116,10 +119,11 @@ Definition pretty_print_XORM :=
 (* https://coq.inria.fr/refman/addendum/extraction.html?highlight=extraction%20warning#realizing-axioms *)
 Extract Constant main => "Prelude.putStrLn pretty_print_noObf".
 Extraction "noObf.hs" pretty_print_noObf main.
-Extract Constant main => "Prelude.putStrLn pretty_print_XORO".
-Extraction "XORO.hs" pretty_print_XORO main.
+
 Extract Constant main => "Prelude.putStrLn pretty_print_XORM".
 Extraction "XORM.hs" pretty_print_XORM main.
+Extract Constant main => "Prelude.putStrLn pretty_print_XORO".
+Extraction "XORO.hs" pretty_print_XORO main.
 
 
 

@@ -139,8 +139,8 @@ Inductive binop : Type :=
 
 
 Inductive phiop : Type :=
-| OPhiNone (* no change*)
-| OPhiSome (m : string). (* A module *)
+| OPhiId (* no change*)
+| OPhi (m : string). (* A module *)
 (* Should I support embedded modules (strings of binops)? *)
 
 (* ***************************************)
@@ -178,8 +178,8 @@ Instance Bit_ScalarTy : ScalarTy TBit :=
       end)
     (fun p =>
       match p with
-      | OPhiNone => fun x => x
-      | OPhiSome m => fun x => x
+      | OPhiId => fun x => x
+      | OPhi m => fun x => x
       end).
 
 (*  Int32 Type Coercions *)
@@ -204,8 +204,8 @@ Instance Int32_ScalarTy : ScalarTy TVec32 :=
       end)
     (fun p => 
       match p with
-      | OPhiNone => fun x => x
-      | OPhiSome m => fun x => x
+      | OPhiId => fun x => x
+      | OPhi m => fun x => x
     end).
 
 (*  Int64 Type Coercions *)
@@ -230,8 +230,8 @@ Instance Int64_ScalarTy : ScalarTy TVec64 :=
       end)
     (fun p => 
       match p with
-      | OPhiNone => fun x => x
-      | OPhiSome m => fun x => x
+      | OPhiId => fun x => x
+      | OPhi m => fun x => x
     end).
 
 (*  Prod (Pair) Type Coercions *)

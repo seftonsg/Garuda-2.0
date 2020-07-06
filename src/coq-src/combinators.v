@@ -452,8 +452,8 @@ Fixpoint compile_pol
   (* Phi Obfuscation *)
   | PPhi t1 t2 _ _ p' => 
     match p' with
-    | OPhiNone => ret (@SAssign t2 _ o (@EVar t2 i))
-    | OPhiSome s => 
+    | OPhiId => ret (@SAssign t2 _ o (@EVar t2 i))
+    | OPhi s => 
       bind new_buf (fun m_new1 =>
       ret (SModule p' m_new1 i o)
       )
