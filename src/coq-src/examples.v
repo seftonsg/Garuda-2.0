@@ -77,7 +77,6 @@ Section XORO.
 
 
   Definition XORO: pol XORO_E XORO_M := XORO_Phi.
-  (*Definition XORO: pol TVec64 TVec64 := XORO_EPhi (EVal (ofromz 0)).*)
 
 End XORO.
 
