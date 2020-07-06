@@ -51,7 +51,15 @@ End noObf.
 (*  An XOR Policy with Inverse Proof *)
 (* ***********************************)
 Section XORO.
-  Variables i o : id TVec64.
+  (* Monitors that obfuscate *)
+  (* XOR Module Obfuscate: *)
+    Definition XORM_O e := EBinop OXor (EVal (ofromz 11673330234144325632)) e.
+    Definition XORO_Mod: pol TVec64 TVec64 := PUpd XORM_O.
+
+  (*Definition XOR_Mod_DeO :=*)
+
+  (* Overarching Monitor *)
+  Variables i is os o : id TVec64.
   (* Main Streams *)
     (* E Stream *)
     (* EffAddr - 64 *)
@@ -65,12 +73,10 @@ Section XORO.
   Definition XORO_ea  := EffAddr.
   Definition XORO_eaO := Obf XORO_ea.
   Definition XORO_key := EVal (ofromz 11673330234144325632).
-  (*Definition XORO_Phi x := EPhiop (OPhiSome ((OPhiNone) x) (OXor (EVar XORO_key))).*)
-  Definition XORO_Phi := OPhiSome "test".
-  Definition XORO_EPhi := PPhi XORO_Phi.
+  Definition XORO_Phi := PPhi (OPhiSome "XORO_Mod").
 
 
-  Definition XORO: pol XORO_E XORO_M := XORO_EPhi.
+  Definition XORO: pol XORO_E XORO_M := XORO_Phi.
   (*Definition XORO: pol TVec64 TVec64 := XORO_EPhi (EVal (ofromz 0)).*)
 
 End XORO.
@@ -82,7 +88,13 @@ Definition noObf_EVar : id noObf_E := "EXE_Stream".
 Definition noObf_MVar : id noObf_M := "MEM_Stream".
 Definition noObf_compiled : prog := compile noObf_EVar noObf_MVar noObf.
 Definition XORO_compiled : prog := compile noObf_EVar noObf_MVar XORO.
+Definition XORM_compiled : prog := compile noObf_EVar noObf_MVar XORO_Mod.
 
+(* Definition EXE_O  : id noObf_E := "EXE_Out". 
+   Definition EXE_SR : id noObf_E := "EXE_SReg".
+   Definition MEM_SR : id noObf_E := "MEM_SReg".
+   Definition MEM_I  : id noObf_E := "MEM_In".
+*)
 
 (* ****************************)
 (*  Define HS Print Functions *)
@@ -91,6 +103,8 @@ Definition pretty_print_noObf :=
   pretty_print_tb "noObf" noObf_compiled.
 Definition pretty_print_XORO :=
   pretty_print_tb "XORO" XORO_compiled.
+Definition pretty_print_XORM :=
+  pretty_print_tb "XORO_Mod" XORM_compiled.
 
 
 (* ************************)
@@ -104,6 +118,8 @@ Extract Constant main => "Prelude.putStrLn pretty_print_noObf".
 Extraction "noObf.hs" pretty_print_noObf main.
 Extract Constant main => "Prelude.putStrLn pretty_print_XORO".
 Extraction "XORO.hs" pretty_print_XORO main.
+Extract Constant main => "Prelude.putStrLn pretty_print_XORM".
+Extraction "XORM.hs" pretty_print_XORM main.
 
 
 
