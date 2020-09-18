@@ -42,9 +42,9 @@ Section noObf.
 End noObf.
 
 
-(* ***********************************)
-(*  An XOR Policy with Inverse Proof *)
-(* ***********************************)
+(* ****************)
+(*  An XOR Policy *)
+(* ****************)
 Section XORO.
   (* Monitors that obfuscate *)
   (* XOR Module Obfuscate: *)
@@ -71,6 +71,35 @@ Section XORO.
 
 End XORO.
 
+(* **************)
+(*  A Something *)
+(* **************)
+Section COMPLX.
+  (* Monitors that obfuscate *)
+  (* XOR Module Obfuscate: *)
+    Definition COMPLX_O e := EBinop OXor (EVal (ofromz 11673330234144325632)) e.
+    Definition COMPLX_Mod: pol TVec64 TVec64 := PUpd COMPLX_O.
+
+  (*Definition XOR_Mod_DeO :=*)
+
+  (* Overarching Monitor *)
+  (*Variables i is os o : id TVec64.*)
+  (* Main Streams *)
+    (* E Stream *)
+    Definition COMPLX_E := TVec64.
+    (* M Stream *)
+    Definition COMPLX_M := TVec64.
+  (* EffAddr *)
+  Definition COMPLX_ea  := EffAddr.
+  Definition COMPLX_eaO := Obf COMPLX_ea.
+  Definition COMPLX_key := EVal (ofromz 11673330234144325632).
+  Definition COMPLX_Phi := PPhi (OPhi "COMPLX_Mod").
+
+
+  Definition COMPLX: pol COMPLX_E COMPLX_M := COMPLX_Phi.
+
+End COMPLX.
+
 (* ***********************)
 (*  Define Pols Compiled *)
 (* ***********************)
@@ -79,8 +108,12 @@ End XORO.
 
   Definition noObf_compiled : prog := compile EVar MVar noObf.
 
+  (* NOTE: XORM is the obfuscation module for XORO *)
   Definition XORM_compiled : prog := compile EVar MVar XORO_Mod.
   Definition XORO_compiled : prog := compile EVar MVar XORO.
+
+  Definition COMPLM_compiled : prog := compile EVar MVar COMPLX_Mod.
+  Definition COMPLX_compiled : prog := compile EVar MVar COMPLX.
 
 (* Definition EXE_O  : id noObf_E := "EXE_Out". 
    Definition EXE_SR : id noObf_E := "EXE_SReg".
@@ -95,10 +128,14 @@ End XORO.
     pretty_print_tb "noObf" noObf_compiled.
 
   Definition pretty_print_XORM :=
-    pretty_print_tb "XORO_Mod" XORM_compiled.
+    pretty_print_tb "XORO_M" XORM_compiled.
   Definition pretty_print_XORO :=
     pretty_print_tb "XORO" XORO_compiled.
 
+  Definition pretty_print_COMPLM :=
+    pretty_print_tb "COMPLX_M" COMPLM_compiled.
+  Definition pretty_print_COMPLX :=
+    pretty_print_tb "COMPLX" COMPLX_compiled.
 
 (* ************************)
 (*  Extraction to Haskell *)
@@ -114,6 +151,11 @@ End XORO.
   Extraction "XORM.hs" pretty_print_XORM main.
   Extract Constant main => "Prelude.putStrLn pretty_print_XORO".
   Extraction "XORO.hs" pretty_print_XORO main.
+
+  Extract Constant main => "Prelude.putStrLn pretty_print_COMPLM".
+  Extraction "COMPLM.hs" pretty_print_COMPLM main.
+  Extract Constant main => "Prelude.putStrLn pretty_print_COMPLX".
+  Extraction "COMPLX.hs" pretty_print_COMPLX main.
 
 
 

@@ -17,3 +17,4 @@ The more verbose way:
 - use ghci to run the output Haskell file
   - `:l <src>.hs`
   - `Prelude.putStr pretty_print_<src>` (or putStrLn?)
+    - Apparently putStrLn and putStr operate the same on my zsh?
