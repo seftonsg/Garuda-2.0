@@ -80,10 +80,8 @@ Section COMPLX.
     Definition COMPLX_O e := EBinop OXor (EVal (ofromz 11673330234144325632)) e.
     Definition COMPLX_Mod: pol TVec64 TVec64 := PUpd COMPLX_O.
 
-  (*Definition XOR_Mod_DeO :=*)
-
   (* Overarching Monitor *)
-  (*Variables i is os o : id TVec64.*)
+  (* Variables i is os o : id TVec64. *)
   (* Main Streams *)
     (* E Stream *)
     Definition COMPLX_E := TVec64.
@@ -93,7 +91,9 @@ Section COMPLX.
   Definition COMPLX_ea  := EffAddr.
   Definition COMPLX_eaO := Obf COMPLX_ea.
   Definition COMPLX_key := EVal (ofromz 11673330234144325632).
-  Definition COMPLX_Phi := PPhi (OPhi "COMPLX_Mod").
+  Definition COMPLX_Phi := `IF` R_type
+                         `THEN` PPhi (OPhi "COMPLX_Mod")
+                         `ELSE` PId.
 
 
   Definition COMPLX: pol COMPLX_E COMPLX_M := COMPLX_Phi.
