@@ -1,18 +1,22 @@
-#macOS
+# macOS
 .DS_Store
 
-#git
+# git
 
-#coq
+# coq
 A-*
 *.aux
 *.glob
 *.vo
 *.
 
-#coqMake
-#Useful note about generating the makefiles:
-#coq_makefile Coqlib.v Extractions.v hdl.v hmac.v Integers.v interaction.v lang.v sha256.v syntax.v
+# coqMake
+# Useful note about generating the makefiles:
+# coq_makefile Coqlib.v Extractions.v hdl.v hmac.v Integers.v interaction.v lang.v sha256.v syntax.v
 
-#Random stuff
-#*.pdf
+# Random stuff
+# *.pdf
+
+#LaTeX
+*.log
+*.pdf
